@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { commentSchema, dishNameSchema, emailSchema, favouritesSchema, isAtLeast13, preferencesSchema, privacySchema, profileSchema, ratingSchema, reportSchema, restaurantSchema, restaurantSlug, signupDetailsSchema, usernameSchema } from "./validation";
+import { commentSchema, dishNameSchema, emailSchema, favouritesSchema, isAtLeast13, passwordSchema, preferencesSchema, privacySchema, profileSchema, ratingSchema, reportSchema, restaurantSchema, restaurantSlug, signupDetailsSchema, usernameSchema } from "./validation";
 
 describe("usernameSchema", () => {
   it.each([
@@ -216,4 +216,14 @@ describe("restaurantSchema / restaurantSlug", () => {
     ["Café Noir", "cafe-noir"],
     ["!!!", "place"],
   ])("%s → %s", (name, slug) => expect(restaurantSlug(name)).toBe(slug));
+});
+
+describe("passwordSchema", () => {
+  it.each([
+    ["short", false],
+    ["1234567", false],
+    ["12345678", true],
+    ["a".repeat(72), true],
+    ["a".repeat(73), false],
+  ])("%s → %s", (password, ok) => expect(passwordSchema.safeParse(password).success).toBe(ok));
 });

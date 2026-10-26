@@ -3,6 +3,10 @@ import { dishKey } from "./dishes";
 
 export const emailSchema = z.string().trim().toLowerCase().pipe(z.email("That email doesn't look right. Check for typos."));
 
+// 8 to 72 characters: 72 is bcrypt's limit, past which Supabase would silently ignore the rest. Keep the minimum in
+// step with Supabase's password setting (Authentication, Sign In / Providers).
+export const passwordSchema = z.string().min(8, "Use at least 8 characters.").max(72, "Use 72 characters or fewer.");
+
 // Mirrors the profiles.username check constraint in the database.
 export const usernameSchema = z
   .string()

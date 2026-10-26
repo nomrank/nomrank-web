@@ -125,13 +125,13 @@ const LONG_EMAIL = "aleksandra.wisniewska-kowalczyk+nomrank@northwind-industries
 
 const FIXTURES = {
   demo: {
-    login: { status: "sent", email: "jo@example.com" } as LoginState,
+    login: { status: "sent", email: "jo@example.com", kind: "confirm" } as LoginState,
     regions: [{ slug: "karnataka", name: "Karnataka" }] as Region[],
     profile: { username: "dosa_devotee", home_region: "karnataka", regions: { name: "Karnataka", demonym: "Kannadigas" } } as Profile,
     places: DEMO_PLACES,
   },
   worst: {
-    login: { status: "error", email: LONG_EMAIL, message: "Too many links in a row. Give it a minute, then try again." } as LoginState,
+    login: { status: "error", email: LONG_EMAIL, message: "Too many tries. Give it a minute, then try again." } as LoginState,
     // Real place names at the long end, as future seeds will have them.
     regions: [
       { slug: "chhatrapati-sambhajinagar", name: "Chhatrapati Sambhajinagar" },
@@ -149,7 +149,7 @@ const FIXTURES = {
     places: [] as Restaurant[],
   },
   one: {
-    login: { status: "sent", email: "a@b.co" } as LoginState,
+    login: { status: "sent", email: "a@b.co", kind: "reset" } as LoginState,
     regions: [{ slug: "karnataka", name: "Karnataka" }] as Region[],
     profile: { username: "abc", home_region: "karnataka", regions: { name: "Karnataka", demonym: "Kannadigas" } } as Profile,
     places: [place("Truffles", "Koramangala", ["All American Cheeseburger"])],

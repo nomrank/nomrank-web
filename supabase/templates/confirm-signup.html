@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="supported-color-schemes" content="light dark">
+<title>Confirm your Nomrank email</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;600;700&family=Urbanist:wght@800;900&family=Plus+Jakarta+Sans:wght@800&display=swap" rel="stylesheet">
+<style>
+  :root { color-scheme: light dark; supported-color-schemes: light dark; }
+  @media (max-width: 520px) {
+    .pad { padding-left: 20px !important; padding-right: 20px !important; }
+    .card { padding: 28px 22px !important; }
+    .title { font-size: 32px !important; line-height: 35px !important; }
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background:#17111c;-webkit-text-size-adjust:100%;">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:#17111c;">One tap and your account is ready. The link works on any device.&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#17111c" style="background:#17111c;">
+  <tr>
+    <td align="center" style="padding:32px 12px 48px 12px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;">
+
+        <tr>
+          <td class="pad" style="padding:0 8px 24px 8px;">
+            <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+              <td valign="middle" style="padding-right:12px;"><img src="https://www.nomrank.in/apple-icon" width="40" height="40" alt="" style="display:block;width:40px;height:40px;border:0;border-radius:10px;"></td>
+              <td valign="middle" style="font-family:'Plus Jakarta Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;font-size:26px;line-height:30px;font-weight:800;letter-spacing:-0.9px;color:#fff4ea;">nomrank<span style="color:#ff4b3a;">.</span></td>
+            </tr></table>
+          </td>
+        </tr>
+
+        <tr>
+          <td class="pad" style="padding:0 8px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td class="card" align="center" bgcolor="#211a27" style="background:#211a27;border:1px solid #2f2737;border-radius:28px;padding:40px 36px;">
+                  <h1 class="title" style="margin:0;font-family:Urbanist, 'Helvetica Neue', Helvetica, Arial, sans-serif;font-size:38px;line-height:41px;font-weight:900;letter-spacing:-1.4px;color:#fff4ea;text-align:center;">Confirm your email<span style="color:#ffc23c;">.</span></h1>
+                  <p style="margin:16px auto 0 auto;max-width:380px;font-family:Geist, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;font-size:16px;line-height:25px;color:#b3a8b9;text-align:center;">One tap and your account is ready. Then pick a username and your home region, and you're rating.</p>
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:28px;">
+                    <tr>
+                      <td align="center" bgcolor="#ff4b3a" style="background:#ff4b3a;border-radius:999px;">
+                        <a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&amp;type=email" style="display:block;padding:18px 24px;font-family:Geist, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;font-size:17px;line-height:22px;font-weight:700;color:#17111c;text-decoration:none;text-align:center;">Confirm email&nbsp;&nbsp;&rarr;</a>
+                      </td>
+                    </tr>
+                  </table>
+                  <p style="margin:24px 0 0 0;font-family:Geist, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;font-size:13px;line-height:20px;color:#8e8296;text-align:center;">Button not working? Paste this link into your browser:<br><a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&amp;type=email" style="color:#b3a8b9;word-break:break-all;">{{ .RedirectTo }}?token_hash={{ .TokenHash }}&amp;type=email</a></p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <tr>
+          <td class="pad" style="padding:28px 8px 0 8px;">
+            <p style="margin:0;font-family:Geist, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;font-size:14px;line-height:22px;color:#b3a8b9;">The link works once, on any phone or computer. Didn't sign up for Nomrank? Ignore this email and nothing happens.</p>
+            <p style="margin:24px 0 0 0;font-family:Geist, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;font-size:12px;line-height:19px;color:#8e8296;">&copy; 2026 Nomrank. All rights reserved.</p>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>
