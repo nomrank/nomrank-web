@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { profileSchema } from "@/lib/validation";
@@ -47,5 +48,6 @@ export async function updateProfile(_: ProfileFormState, formData: FormData): Pr
     await supabase.storage.from("avatars").remove([profile.avatar_path]);
   }
 
+  revalidatePath("/", "layout"); // the phone nav shows your avatar and handle
   redirect(`/u/${profile.username}?done=profile`);
 }

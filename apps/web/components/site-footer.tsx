@@ -26,7 +26,7 @@ export function SiteFooter() {
   // Read on the server. The client-side homepage also renders this footer, but before launch the proxy never serves it.
   const prelaunch = process.env.COMING_SOON === "1";
   return (
-    <footer className="mx-auto mt-16 w-full max-w-6xl border-t border-hairline px-5 pt-8 lg:px-8">
+    <footer className="mx-auto mt-6 w-full md:mt-16 max-w-6xl border-t border-hairline px-5 pt-8 lg:px-8">
       <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <Wordmark />

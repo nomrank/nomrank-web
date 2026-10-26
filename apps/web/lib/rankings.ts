@@ -62,13 +62,21 @@ export function rankList(dishes: DishDetail[], rankings: Ranking[]): RankedDish[
     .sort((a, b) => (a.rank ?? Infinity) - (b.rank ?? Infinity) || b.ratings - a.ratings || a.name.localeCompare(b.name));
 }
 
-type Listed = { id: string; name: string; diet: DishDetail["diet"]; space_id: string | null; restaurant: { slug: string; name: string } };
+type Listed = {
+  id: string;
+  name: string;
+  diet: DishDetail["diet"];
+  space_id: string | null;
+  avg_score: number | null;
+  rating_count: number;
+  restaurant: { slug: string; name: string };
+};
 
 // Dishes that sit in a list, for the Rankings tab.
 export async function getListedDishes(supabase: SupabaseClient) {
   const { data, error } = await supabase
     .from("dishes")
-    .select("id, name, diet, space_id, restaurant:restaurants(slug, name)")
+    .select("id, name, diet, space_id, avg_score, rating_count, restaurant:restaurants(slug, name)")
     .not("space_id", "is", null)
     .returns<Listed[]>();
   if (error) throw error;

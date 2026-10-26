@@ -38,7 +38,7 @@ export function ReviewCard({ review: r, vote, viewer, showDish = true, full, inM
     </>
   );
   return (
-    <article className={cn("relative", inMeal ? "py-4" : "py-5")}>
+    <article className={cn("relative", inMeal ? "py-4" : "pt-5 pb-3 md:pb-5")}>
       {!showDish && (
         <header className="mb-3 flex items-center gap-2.5 text-sm">
           {byline}

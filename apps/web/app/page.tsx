@@ -26,7 +26,7 @@ export default function HomePage({ searchParams }: PageProps<"/">) {
 }
 
 async function Home({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
-  const { sort: asked, account } = await searchParams;
+  const { sort: asked, account, tab } = await searchParams;
   const { supabase, userId, profile } = await getViewer();
   const prefs = await getPreferences(supabase, userId);
   // No ?sort → your default feed. "Following" needs a signed-in viewer; signed out it falls back to Top.
@@ -49,12 +49,14 @@ async function Home({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
   ]);
   return (
     <HomeView
+      key={tab === "rankings" ? "rankings" : "takes"} // the nav's Rankings link lands on that tab even when already on "/"
       profile={profile}
       restaurants={restaurants}
       feed={{ sort, reviews, votes }}
       leaders={listLeaders(lists, listed, rankings, prefs.show_diet)}
       admin={admin}
       unread={unread}
+      initialView={tab === "rankings" ? "rankings" : "takes"}
       showDiet={prefs.show_diet}
       notice={account === "deleted" ? "Your account and everything in it has been deleted." : undefined}
     />

@@ -26,11 +26,11 @@ type View = "takes" | "rankings" | "dishes" | "places";
 type Feed = { sort: FeedSort; reviews: Review[]; votes: Record<string, Vote> };
 type DishGroup = { key: string; name: string; spots: { id: string; name: string; diet: DishDiet; avg: number | null; count: number; place: Restaurant }[] };
 
-type HomeProps = { profile: Profile | null; restaurants: Restaurant[]; feed: Feed; leaders?: Leader[]; showDiet?: ShowDiet; notice?: string; admin?: boolean; unread?: number };
+type HomeProps = { profile: Profile | null; restaurants: Restaurant[]; feed: Feed; leaders?: Leader[]; showDiet?: ShowDiet; notice?: string; admin?: boolean; unread?: number; initialView?: View };
 
-export function HomeView({ profile, restaurants, feed, leaders = [], showDiet = "all", notice, admin = false, unread = 0 }: HomeProps) {
+export function HomeView({ profile, restaurants, feed, leaders = [], showDiet = "all", notice, admin = false, unread = 0, initialView = "takes" }: HomeProps) {
   const [query, setQuery] = useState("");
-  const [view, setView] = useState<View>("takes");
+  const [view, setView] = useState<View>(initialView);
   const q = dishKey(useDeferredValue(query));
 
   return (
@@ -40,20 +40,24 @@ export function HomeView({ profile, restaurants, feed, leaders = [], showDiet = 
         <div className="flex items-center gap-2">
           <Link
             href={profile ? "/rate" : "/login"}
-            className="inline-flex min-h-10 items-center gap-1.5 rounded-md bg-ketchup px-3.5 text-sm font-semibold text-studio hover:brightness-110 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
+            className="hidden min-h-10 items-center gap-1.5 rounded-md bg-ketchup px-3.5 text-sm font-semibold text-studio hover:brightness-110 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none md:inline-flex"
           >
             <PlusIcon aria-hidden className="size-4" strokeWidth={2.5} />
             Rate
           </Link>
+          {/* On phones Rate and the bell live in the bottom nav; the avatar stays here for settings and sign out. */}
           {profile ? (
             <>
-              <NotificationBell unread={unread} />
+              <span className="hidden md:contents">
+                <NotificationBell unread={unread} />
+              </span>
               <AccountMenu handle={profile.username} name={null} avatar={profile.avatar} photo={profile.avatar_path} admin={admin} />
             </>
           ) : (
+            // Phones already have Sign in in the bottom nav.
             <Link
               href="/login"
-              className="inline-flex min-h-10 items-center rounded-md border border-hairline px-3.5 text-sm font-semibold transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              className="hidden min-h-10 items-center rounded-md border border-hairline px-3.5 text-sm font-semibold transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:inline-flex"
             >
               Sign in
             </Link>
@@ -122,6 +126,8 @@ export function HomeView({ profile, restaurants, feed, leaders = [], showDiet = 
                   onClick={() => startTransition(() => setView(v))}
                   className={cn(
                     "relative -mb-px min-h-11 text-sm font-semibold capitalize transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+                    // Rankings already has its own bottom-nav tab on phones; this row keeps it on desktop only.
+                    v === "rankings" && "hidden md:inline",
                     view === v ? "text-foreground" : "text-muted-foreground hover:text-foreground",
                   )}
                 >
@@ -160,7 +166,8 @@ export function HomeView({ profile, restaurants, feed, leaders = [], showDiet = 
   );
 }
 
-// One row per food list: "Top Dosa", with its current #1 (crowned) and how many dishes compete.
+// One row per food list, led by the current #1 dish itself (what people actually came to see), with
+// "Top Dosa" as the small label above it. Only the dish's own name needs a glance; the rest is detail.
 function Rankings({ leaders }: { leaders: Leader[] }) {
   if (!leaders.length) return <p className="text-muted-foreground">No rankings yet. They fill in as people rate.</p>;
   return (
@@ -169,17 +176,19 @@ function Rankings({ leaders }: { leaders: Leader[] }) {
         <li key={list.id}>
           <Row
             href={listHref(list.name)}
-            title={`Top ${list.name}`}
-            meta={
+            label={`Top ${list.name}`}
+            diet={leader?.diet}
+            title={
               leader ? (
-                <>
-                  <CrownIcon aria-label="Number one:" className="mr-1 inline size-3.5 align-[-2px] text-mustard" />
-                  {leader.name}, {leader.restaurant.name} · {dishCount(count)}
-                </>
+                <span className="flex items-center gap-1.5 text-base font-bold wrap-anywhere">
+                  <CrownIcon aria-label="Number one:" className="size-3.5 shrink-0 text-mustard" />
+                  {leader.name}
+                </span>
               ) : (
-                `${dishCount(count)} · none rated yet`
+                <span className="block text-base font-bold text-muted-foreground">Not rated yet</span>
               )
             }
+            meta={leader ? <>{leader.restaurant.name} · <DishAvg avg={leader.avg_score} count={leader.rating_count} orEmpty /></> : dishCount(count)}
           />
         </li>
       ))}
@@ -434,7 +443,7 @@ function Takes({ feed, viewer }: { feed: Feed; viewer: string | null }) {
               </li>
             ))}
           </ul>
-          <div ref={end} aria-live="polite" className="flex min-h-16 items-center justify-center py-6">
+          <div ref={end} aria-live="polite" className="flex items-center justify-center py-2 md:min-h-16 md:py-6">
             {loading ? (
               <BroadcastLoader size={32} label="Loading more takes" />
             ) : (
