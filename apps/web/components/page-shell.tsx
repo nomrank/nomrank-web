@@ -13,7 +13,7 @@ type Props = {
 // Shell for browsing screens: a full-width header (wordmark + optional action), then the page.
 export function PageShell({ children, action, wide }: Props) {
   return (
-    <main className="flex min-h-dvh w-full flex-col pt-[max(env(safe-area-inset-top),0.75rem)] pb-[max(env(safe-area-inset-bottom),1.5rem)]">
+    <main className="flex min-h-dvh w-full flex-col pt-[max(env(safe-area-inset-top),0.75rem)] pb-[calc(env(safe-area-inset-bottom)+1rem)] md:pb-[max(env(safe-area-inset-bottom),1.5rem)]">
       <header className="mx-auto flex h-12 w-full max-w-6xl items-center justify-between gap-3 px-5 lg:h-16 lg:px-8">
         <Wordmark />
         {action}

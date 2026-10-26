@@ -24,11 +24,11 @@ describe("listLeaders", () => {
     { id: "idli", name: "Idli", region: null },
   ];
   const dishes = [
-    { id: "cb", name: "Chicken Biryani", diet: "non_veg" as const, space_id: "biryani", restaurant: place },
-    { id: "vb", name: "Veg Biryani", diet: "veg" as const, space_id: "biryani", restaurant: place },
-    { id: "md", name: "Masala Dosa", diet: "veg" as const, space_id: "dosa", restaurant: place },
-    { id: "sd", name: "Set Dosa", diet: "veg" as const, space_id: "dosa", restaurant: place },
-    { id: "pd", name: "Plain Dosa", diet: "veg" as const, space_id: "dosa", restaurant: place },
+    { id: "cb", name: "Chicken Biryani", diet: "non_veg" as const, space_id: "biryani", avg_score: 8.5, rating_count: 9, restaurant: place },
+    { id: "vb", name: "Veg Biryani", diet: "veg" as const, space_id: "biryani", avg_score: 8, rating_count: 2, restaurant: place },
+    { id: "md", name: "Masala Dosa", diet: "veg" as const, space_id: "dosa", avg_score: null, rating_count: 0, restaurant: place },
+    { id: "sd", name: "Set Dosa", diet: "veg" as const, space_id: "dosa", avg_score: 7, rating_count: 7, restaurant: place },
+    { id: "pd", name: "Plain Dosa", diet: "veg" as const, space_id: "dosa", avg_score: 6, rating_count: 1, restaurant: place },
   ];
   const rankings = [ranking("cb", 1), ranking("vb", 2), ranking("md", null, 0)];
 

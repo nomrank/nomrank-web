@@ -24,14 +24,16 @@ const LABELS: Record<Mode, { button: string; busy: string }> = {
 export function LoginScreen({ initialState = { status: "idle" } }: { initialState?: LoginState }) {
   const [mode, setMode] = useState<Mode>("signin");
   const [attempt, setAttempt] = useState(0); // remounts the form so its message and fields start fresh
-  const go = (next: Mode) => {
+  const [prefill, setPrefill] = useState("");
+  const go = (next: Mode, email = "") => {
     setMode(next);
+    setPrefill(email);
     setAttempt((n) => n + 1);
   };
-  return <LoginForm key={`${mode}-${attempt}`} mode={mode} go={go} initial={attempt === 0 ? initialState : { status: "idle" }} />;
+  return <LoginForm key={`${mode}-${attempt}`} mode={mode} go={go} prefill={prefill} initial={attempt === 0 ? initialState : { status: "idle" }} />;
 }
 
-function LoginForm({ mode, go, initial }: { mode: Mode; go: (m: Mode) => void; initial: LoginState }) {
+function LoginForm({ mode, go, initial, prefill }: { mode: Mode; go: (m: Mode, email?: string) => void; initial: LoginState; prefill: string }) {
   const [state, action, pending] = useActionState<LoginState, FormData>(
     (prev, data) => (ACTIONS[String(data.get("mode")) as keyof typeof ACTIONS] ?? signIn)(prev, data),
     initial,
@@ -135,7 +137,7 @@ function LoginForm({ mode, go, initial }: { mode: Mode; go: (m: Mode) => void; i
               autoCapitalize="none"
               spellCheck={false}
               placeholder="you@example.com"
-              defaultValue={state.status === "error" ? state.email : ""}
+              defaultValue={state.status === "error" ? state.email : prefill}
               aria-invalid={error ? true : undefined}
               aria-describedby={error ? "form-error" : undefined}
               required
@@ -183,6 +185,11 @@ function LoginForm({ mode, go, initial }: { mode: Mode; go: (m: Mode) => void; i
           )}
 
           {error && <FieldError id="form-error">{error}</FieldError>}
+          {mode === "signup" && error?.includes("already has an account") && state.status === "error" && (
+            <Button type="button" size="xl" variant="secondary" className="w-full" onClick={() => go("signin", state.email)}>
+              Sign in instead
+            </Button>
+          )}
 
           <Button type="submit" size="xl" className="w-full" disabled={pending}>
             {pending && <Spinner data-icon="inline-start" />}

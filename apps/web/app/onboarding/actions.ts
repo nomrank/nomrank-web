@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { signupDetailsSchema, usernameSchema } from "@/lib/validation";
@@ -53,5 +54,6 @@ export async function createProfile(_: OnboardingState, formData: FormData): Pro
   // Private details (owner-only table). The age was checked above; if this write fails, the profile still stands
   // and the birthday can be added from Edit profile, so don't block sign-up on it.
   await supabase.from("profile_private").upsert({ date_of_birth, gender }, { onConflict: "user_id" });
+  revalidatePath("/", "layout"); // the phone nav in the root layout was rendered signed out (no profile yet)
   redirect("/");
 }

@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Plus_Jakarta_Sans, Suez_One } from "next/font/google";
 import "./globals.css";
 import { NavigationTracker } from "@/components/back-link";
+import { MobileNavLoader } from "@/components/mobile-nav-loader";
 import { Toaster } from "@/components/toaster";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -35,6 +36,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <NavigationTracker />
         </Suspense>
         {children}
+        <Suspense fallback={null}>
+          <MobileNavLoader />
+        </Suspense>
         <Suspense fallback={null}>
           <Toaster />
         </Suspense>
