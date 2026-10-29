@@ -10,6 +10,7 @@ export async function MobileNavLoader() {
   await connection(); // session checks read the clock (token expiry), which can't happen while prerendering
   // Pre-launch the main domain rewrites "/" to the waitlist page (see proxy.ts), so the URL alone can't tell us.
   const host = (await headers()).get("host") ?? "";
+  if (host.startsWith("admin.")) return null; // the admin site has its own header
   if (process.env.COMING_SOON === "1" && !host.startsWith("beta.")) return null;
 
   const supabase = await createClient();

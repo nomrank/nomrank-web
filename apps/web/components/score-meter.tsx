@@ -134,7 +134,7 @@ export function ScoreMeter({ score, onChange }: { score: number; onChange: (n: n
           <MinusIcon aria-hidden className="size-5" />
         </StepButton>
         <p aria-hidden className="text-center text-sm text-muted-foreground">
-          Tap a slice or drag around the plate
+          Tap or drag round the plate
         </p>
         <StepButton label="Raise the score by half a point" onClick={() => step(0.5)} disabled={score >= 10}>
           <PlusIcon aria-hidden className="size-5" />

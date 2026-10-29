@@ -21,3 +21,10 @@ turns the token into a session.
 `{{ .RedirectTo }}` is the address the person signed up from (`app/login/actions.ts` passes `<origin>/auth/confirm`).
 Supabase only uses it if it is on the redirect allow-list (Authentication, URL Configuration); otherwise it falls back
 to the Site URL. Keep `https://beta.nomrank.in/**` and the main domain on that list.
+
+## Admin emails (nothing to paste)
+
+`admin/admin-invite.html` and `admin/admin-removed.html` are sample renders of the two emails the admin site sends. Unlike the
+two above they are not pasted anywhere: the app builds and sends them itself (`apps/web/lib/admin-email.ts`, through Resend)
+from `Nomrank Admin <admin@nomrank.in>`. Resend needs the `nomrank.in` domain verified, which `hello@nomrank.in` already needs.
+Edit the wording in the code; these files are only a preview.

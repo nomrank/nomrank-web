@@ -2,6 +2,8 @@
 
 import { startTransition, useDeferredValue, useEffect, useRef, useState, ViewTransition } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { asHomeTab, showTab, type HomeTab } from "@/lib/home-tab";
 import { CrownIcon, PlusIcon, SearchIcon, XIcon } from "lucide-react";
 import type { Profile } from "@/lib/auth";
 import type { Restaurant } from "@/lib/restaurants";
@@ -25,14 +27,21 @@ import { CityPicker } from "@/components/city-picker";
 import type { City } from "@/lib/cities";
 import { DishGroupRow, groupDishes, type DishGroup } from "@/components/dish-group";
 
-type View = "takes" | "rankings" | "dishes" | "places";
+type View = HomeTab;
 type Feed = { sort: FeedSort; reviews: Review[]; votes: Record<string, Vote> };
 
-type HomeProps = { profile: Profile | null; restaurants: Restaurant[]; feed: Feed; leaders?: Leader[]; showDiet?: ShowDiet; notice?: string; admin?: boolean; unread?: number; initialView?: View; city?: City | null };
+type HomeProps = { profile: Profile | null; restaurants: Restaurant[]; feed: Feed; leaders?: Leader[]; showDiet?: ShowDiet; notice?: string; unread?: number; initialView?: View; city?: City | null };
 
-export function HomeView({ profile, restaurants, feed, leaders = [], showDiet = "all", notice, admin = false, unread = 0, initialView = "takes", city = null }: HomeProps) {
+export function HomeView({ profile, restaurants, feed, leaders = [], showDiet = "all", notice, unread = 0, initialView = "takes", city = null }: HomeProps) {
   const [query, setQuery] = useState("");
   const [view, setView] = useState<View>(initialView);
+  // The address changed (a tab here, the bottom nav, back/forward): follow it.
+  const urlView = asHomeTab(useSearchParams().get("tab"));
+  const [seenUrlView, setSeenUrlView] = useState(urlView);
+  if (urlView !== seenUrlView) {
+    setSeenUrlView(urlView);
+    setView(urlView);
+  }
   const q = dishKey(useDeferredValue(query));
 
   return (
@@ -53,7 +62,7 @@ export function HomeView({ profile, restaurants, feed, leaders = [], showDiet = 
               <span className="hidden md:contents">
                 <NotificationBell unread={unread} />
               </span>
-              <AccountMenu handle={profile.username} name={null} avatar={profile.avatar} photo={profile.avatar_path} admin={admin} />
+              <AccountMenu handle={profile.username} name={null} avatar={profile.avatar} photo={profile.avatar_path} />
             </>
           ) : (
             // Phones already have Sign in in the bottom nav.
@@ -126,7 +135,10 @@ export function HomeView({ profile, restaurants, feed, leaders = [], showDiet = 
                   key={v}
                   type="button"
                   aria-pressed={view === v}
-                  onClick={() => startTransition(() => setView(v))}
+                  onClick={() => startTransition(() => {
+                    setView(v);
+                    showTab(v);
+                  })}
                   className={cn(
                     "relative -mb-px min-h-11 text-sm font-semibold capitalize transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
                     // Rankings already has its own bottom-nav tab on phones; this row keeps it on desktop only.
@@ -149,7 +161,7 @@ export function HomeView({ profile, restaurants, feed, leaders = [], showDiet = 
             {q ? (
               <Results q={q} restaurants={restaurants} />
             ) : view === "takes" ? (
-              <Takes key={`${feed.sort}-${city}`} feed={feed} viewer={profile?.username ?? null} />
+              <Takes key={`${feed.sort}-${city}`} feed={feed} viewer={profile?.username ?? null} city={city} />
             ) : view === "rankings" ? (
               <Rankings leaders={leaders} />
             ) : view === "dishes" ? (
@@ -337,7 +349,7 @@ function Results({ q, restaurants }: { q: string; restaurants: Restaurant[] }) {
 const placeCount = (n: number) => (n === 1 ? "1 place" : `${n} places`);
 
 // The feed, one page at a time: when the end comes into view, the next page loads and joins the list.
-function Takes({ feed, viewer }: { feed: Feed; viewer: string | null }) {
+function Takes({ feed, viewer, city }: { feed: Feed; viewer: string | null; city: City | null }) {
   const [more, setMore] = useState<{ reviews: Review[]; votes: Record<string, Vote> }>({ reviews: [], votes: {} });
   const [fetched, setFetched] = useState(feed.reviews.length); // rows asked for so far (the next offset)
   const [done, setDone] = useState(feed.reviews.length < FEED_PAGE);
@@ -414,7 +426,7 @@ function Takes({ feed, viewer }: { feed: Feed; viewer: string | null }) {
         </>
       ) : (
         <div className="py-10 text-center">
-          <p className="font-semibold">{feed.sort === "following" ? "Nothing from your people yet" : "No takes yet"}</p>
+          <p className="font-semibold">{feed.sort === "following" ? "Nothing from your people yet" : city ? `No takes in ${city} yet` : "No takes yet"}</p>
           <p className="mt-1 text-sm text-muted-foreground">
             {feed.sort === "following"
               ? "Follow people from their profiles and their takes land here."

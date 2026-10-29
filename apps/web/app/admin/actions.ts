@@ -1,11 +1,17 @@
 "use server";
 
+import { createHash, randomBytes } from "node:crypto";
 import { refresh } from "next/cache";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
+import { sendEmail } from "@/lib/email";
+import { ADMIN_FROM, adminInviteEmail, adminRemovedEmail } from "@/lib/admin-email";
+import { inviteUrl, signInEmail } from "@/lib/superadmin";
 import { isAdmin } from "@/lib/admin";
-import { restaurantSchema, restaurantSlug } from "@/lib/validation";
+import { emailSchema, passwordSchema, restaurantSchema, restaurantSlug } from "@/lib/validation";
 import { asCity } from "@/lib/cities";
 
 // Every admin action runs as the signed-in admin; the database functions check is_admin() again and log it.
@@ -93,4 +99,182 @@ export async function addRestaurant(_: AdminResult, formData: FormData): Promise
     if (error.code !== "23505") return failed("Couldn't add that restaurant. Try again.");
   }
   return failed("A restaurant with that name already exists in several areas. Add the area to the name.");
+}
+
+const diet = z.enum(["veg", "vegan", "egg", "non_veg"]);
+const dishName = z.string().trim().min(2, "Give the dish a name (at least 2 characters).").max(60, "Keep it under 60 characters.");
+
+export async function updateRestaurant(_: AdminResult, formData: FormData): Promise<AdminResult> {
+  const placeId = id.safeParse(formData.get("id"));
+  const parsed = restaurantSchema.safeParse({ name: formData.get("name"), area: formData.get("area") });
+  const city = asCity(formData.get("city"));
+  if (!placeId.success) return failed("That restaurant isn't valid.");
+  if (!parsed.success) return failed(parsed.error.issues[0].message);
+  if (!city) return failed("Pick the city.");
+  const supabase = await admin();
+  const { error } = await supabase.rpc("admin_update_restaurant", { target: placeId.data, name: parsed.data.name, area: parsed.data.area, city });
+  if (error) return failed("Couldn't save that. Try again.");
+  refresh();
+  return { ok: Date.now() };
+}
+
+// Delete a restaurant, its dishes and their takes, then the photo files.
+export async function deleteRestaurant(placeId: string): Promise<AdminResult> {
+  if (!id.safeParse(placeId).success) return failed("That restaurant isn't valid.");
+  const supabase = await admin();
+  const { data: paths, error } = await supabase.rpc("admin_delete_restaurant", { target: placeId });
+  if (error) return failed("Couldn't delete that restaurant. Try again.");
+  if (paths?.length) await supabase.storage.from("rating-photos").remove(paths as string[]);
+  refresh();
+  return { ok: Date.now() };
+}
+
+// An admin's new dish is approved straight away (a database trigger) and joins its food list by name.
+export async function addDish(_: AdminResult, formData: FormData): Promise<AdminResult> {
+  const placeId = id.safeParse(formData.get("restaurant_id"));
+  const name = dishName.safeParse(formData.get("name"));
+  const kind = diet.safeParse(formData.get("diet"));
+  if (!placeId.success) return failed("That restaurant isn't valid.");
+  if (!name.success) return failed(name.error.issues[0].message);
+  if (!kind.success) return failed("Pick veg, vegan, egg or non-veg.");
+  const { supabase, userId } = await getCurrentUser();
+  if (!(await isAdmin(supabase))) notFound();
+  const { error } = await supabase.from("dishes").insert({ restaurant_id: placeId.data, name: name.data, diet: kind.data, created_by: userId });
+  if (error) return failed(error.code === "23505" ? "That dish is already on this menu." : "Couldn't add that dish. Try again.");
+  refresh();
+  return { ok: Date.now() };
+}
+
+export async function updateDish(_: AdminResult, formData: FormData): Promise<AdminResult> {
+  const dishId = id.safeParse(formData.get("id"));
+  const name = dishName.safeParse(formData.get("name"));
+  const kind = diet.safeParse(formData.get("diet"));
+  if (!dishId.success) return failed("That dish isn't valid.");
+  if (!name.success) return failed(name.error.issues[0].message);
+  if (!kind.success) return failed("Pick veg, vegan, egg or non-veg.");
+  const supabase = await admin();
+  const { error } = await supabase.rpc("admin_update_dish", { target: dishId.data, name: name.data, diet: kind.data });
+  if (error) return failed(error.code === "23505" ? "That name is already on this menu." : "Couldn't save that dish. Try again.");
+  refresh();
+  return { ok: Date.now() };
+}
+
+// Admins join by invitation, and only the superadmin invites or removes (the database enforces that). An invitation is a
+// random token in an emailed link; the database keeps only its hash.
+const sha256 = (value: string) => createHash("sha256").update(value).digest("hex");
+
+async function adminOrigin() {
+  const h = await headers();
+  return h.get("origin") ?? `http://${h.get("host")}`;
+}
+
+export async function inviteAdmin(_: AdminResult, formData: FormData): Promise<AdminResult> {
+  const email = emailSchema.safeParse(String(formData.get("email") ?? ""));
+  if (!email.success) return failed(email.error.issues[0].message);
+  const { supabase, profile } = await getCurrentUser();
+  if (!(await isAdmin(supabase))) notFound();
+  const token = randomBytes(32).toString("base64url");
+  const { error } = await supabase.rpc("admin_create_invite", { invite_email: email.data.toLowerCase(), hash: sha256(token) });
+  if (error) {
+    if (error.code === "23505") return failed("They're already an admin.");
+    if (error.message.includes("superadmin")) return failed("Only the superadmin can invite admins.");
+    if (error.message.includes("default password")) return failed("Change the default password first.");
+    return failed("Couldn't create the invitation. Try again.");
+  }
+  try {
+    await sendEmail({ from: ADMIN_FROM, to: email.data, ...adminInviteEmail({ url: inviteUrl(await adminOrigin(), token), inviter: profile?.username ? `@${profile.username}` : "A Nomrank admin" }) });
+  } catch {
+    return failed("The invitation was saved but the email didn't send. Cancel it and try again.");
+  }
+  refresh();
+  return { ok: Date.now() };
+}
+
+export async function cancelInvite(inviteId: string): Promise<AdminResult> {
+  if (!id.safeParse(inviteId).success) return failed("That invitation isn't valid.");
+  const supabase = await admin();
+  const { error } = await supabase.rpc("admin_cancel_invite", { invite: inviteId });
+  if (error) return failed("Couldn't cancel that invitation. Try again.");
+  refresh();
+  return { ok: Date.now() };
+}
+
+// Remove an admin, then tell them by email (best effort: the removal already happened).
+export async function removeAdmin(account: string): Promise<AdminResult> {
+  if (!id.safeParse(account).success) return failed("That account isn't valid.");
+  const supabase = await admin();
+  const { data: email, error } = await supabase.rpc("admin_remove_admin", { account });
+  if (error) return failed(error.message.includes("superadmin can") ? "The superadmin can't be removed." : "Couldn't remove that admin. Try again.");
+  if (typeof email === "string" && email && !email.endsWith("@admin.nomrank.in")) {
+    try {
+      await sendEmail({ from: ADMIN_FROM, to: email, ...adminRemovedEmail() });
+    } catch {
+      /* they're removed either way */
+    }
+  }
+  refresh();
+  return { ok: Date.now() };
+}
+
+// Accept an invitation: you must be signed in as the account with the invited email (the database checks).
+export async function acceptInvite(token: string): Promise<AdminResult> {
+  if (!/^[A-Za-z0-9_-]{20,100}$/.test(token)) return failed("That invitation link isn't valid.");
+  const { supabase } = await getCurrentUser();
+  const { error } = await supabase.rpc("accept_admin_invite", { hash: sha256(token) });
+  if (error) {
+    if (error.message.includes("another email")) return failed("This invitation was sent to a different email. Sign in with that account.");
+    if (error.message.includes("banned")) return failed("This account can't be an admin.");
+    return failed("This invitation has expired or was already used. Ask the superadmin for a new one.");
+  }
+  return { ok: Date.now() }; // the page then loads "/" afresh: a redirect() here would render the app's home on this host
+}
+
+// Admin sign-in: an email address, or the username "superadmin". Returns to `next` (an invitation) when it's ours.
+export type AdminSignInState = { error?: string; identifier?: string; go?: string };
+
+export async function adminSignIn(_: AdminSignInState, formData: FormData): Promise<AdminSignInState> {
+  const identifier = String(formData.get("identifier") ?? "").trim();
+  const password = String(formData.get("password") ?? "");
+  if (!identifier || !password) return { error: "Enter your email (or username) and password.", identifier };
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signInWithPassword({ email: signInEmail(identifier), password });
+  if (error) return { error: error.status === 429 ? "Too many tries. Give it a minute, then try again." : "That email and password don't match.", identifier };
+  const next = String(formData.get("next") ?? "");
+  // Not redirect(): inside an action it would render the app's page for "/" on this host. The form loads `go` afresh.
+  return { go: /^\/invite\/[A-Za-z0-9_-]+$/.test(next) ? next : "/" };
+}
+
+export async function adminSignOut(): Promise<AdminResult> {
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+  return { ok: Date.now() };
+}
+
+// Your own account: display name and password.
+export async function updateMyName(_: AdminResult, formData: FormData): Promise<AdminResult> {
+  const name = String(formData.get("display_name") ?? "").trim();
+  if (name.length > 40) return failed("Keep it under 40 characters.");
+  const { supabase, userId } = await getCurrentUser();
+  if (!(await isAdmin(supabase))) notFound();
+  const { error } = await supabase.from("profiles").update({ display_name: name || null }).eq("id", userId);
+  if (error) return failed("Couldn't save your name. Try again.");
+  refresh();
+  return { ok: Date.now() };
+}
+
+export async function changePassword(_: AdminResult, formData: FormData): Promise<AdminResult> {
+  const password = passwordSchema.safeParse(String(formData.get("password") ?? ""));
+  if (!password.success) return failed(password.error.issues[0].message);
+  if (formData.get("password") !== formData.get("confirm")) return failed("The two passwords don't match.");
+  const { supabase } = await getCurrentUser();
+  if (!(await isAdmin(supabase))) notFound();
+  const { error } = await supabase.auth.updateUser({ password: password.data });
+  if (error) {
+    if (error.code === "same_password") return failed("That's your current password. Pick a new one.");
+    if (error.code === "weak_password") return failed("Pick a stronger password: at least 8 characters.");
+    if (error.code === "reauthentication_needed") return failed("Sign out and back in, then try again.");
+    return failed("Couldn't change your password. Try again.");
+  }
+  refresh();
+  return { ok: Date.now() };
 }

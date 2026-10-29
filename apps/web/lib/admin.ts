@@ -147,3 +147,87 @@ export async function getModerationLog(supabase: SupabaseClient): Promise<LogEnt
   const handles = await handlesOf(supabase, data.map((l) => (l.admin_id as string) ?? ""));
   return data.map(({ admin_id, ...l }) => ({ ...(l as Omit<LogEntry, "admin">), admin: admin_id ? (handles.get(admin_id as string) ?? null) : null }));
 }
+
+export type AdminStatus = { admin: boolean; super: boolean; default_password: boolean };
+
+// Who's looking: an admin or not, the superadmin or not, and whether the superadmin still has the default password.
+export async function getAdminStatus(supabase: SupabaseClient): Promise<AdminStatus> {
+  const { data, error } = await supabase.rpc("admin_status");
+  if (error) throw error;
+  return data as AdminStatus;
+}
+
+export type AdminInvite = { id: string; email: string; created_at: string; expires_at: string };
+
+export async function getInvites(supabase: SupabaseClient): Promise<AdminInvite[]> {
+  const { data, error } = await supabase.rpc("admin_list_invites");
+  if (error) throw error;
+  return data as AdminInvite[];
+}
+
+export type AdminAccount = { user_id: string; username: string; display_name: string | null; created_at: string; is_super: boolean };
+
+export async function getAdmins(supabase: SupabaseClient): Promise<AdminAccount[]> {
+  const { data, error } = await supabase.rpc("admin_list_admins");
+  if (error) throw error;
+  return data as AdminAccount[];
+}
+
+export type AdminPlace = {
+  id: string;
+  slug: string;
+  name: string;
+  area: string;
+  city: string;
+  dishes: { id: string; name: string; diet: DishDiet; rating_count: number; avg_score: number | null; approved_at: string | null }[];
+};
+
+// One restaurant with its whole menu, waiting dishes included (admins can read those).
+export async function getPlace(supabase: SupabaseClient, slug: string): Promise<AdminPlace | null> {
+  const { data, error } = await supabase
+    .from("restaurants")
+    .select("id, slug, name, area, city, dishes(id, name, diet, rating_count, avg_score, approved_at)")
+    .eq("slug", slug)
+    .order("name", { referencedTable: "dishes" })
+    .maybeSingle<AdminPlace>();
+  if (error) throw error;
+  return data;
+}
+
+export type PersonContent = {
+  person: { id: string; username: string; display_name: string | null; banned_at: string | null };
+  takes: { id: string; score: number; take: string | null; created_at: string; dish: { name: string; restaurant: { name: string } } | null }[];
+  comments: { id: string; body: string; created_at: string; rating_id: string }[];
+};
+
+// A person's latest takes and comments, so an admin can remove any of them.
+export async function getPersonContent(supabase: SupabaseClient, handle: string): Promise<PersonContent | null> {
+  const { data: person, error } = await supabase
+    .from("profiles")
+    .select("id, username, display_name, banned_at")
+    .eq("username", handle.trim().replace(/^@/, "").toLowerCase())
+    .maybeSingle<PersonContent["person"]>();
+  if (error) throw error;
+  if (!person) return null;
+  const [takes, comments] = await Promise.all([
+    supabase
+      .from("ratings")
+      .select("id, score, take, created_at, dish:dishes(name, restaurant:restaurants(name))")
+      .eq("user_id", person.id)
+      .order("created_at", { ascending: false })
+      .limit(50)
+      .returns<PersonContent["takes"]>(),
+    supabase.from("comments").select("id, body, created_at, rating_id").eq("user_id", person.id).order("created_at", { ascending: false }).limit(50).returns<PersonContent["comments"]>(),
+  ]);
+  if (takes.error) throw takes.error;
+  if (comments.error) throw comments.error;
+  return { person, takes: takes.data, comments: comments.data };
+}
+
+// Where the consumer app lives, for links out of the admin site: admin.nomrank.in → www (beta before launch, since
+// www only shows the waitlist then); admin.localhost:3000 → localhost:3000.
+export function appOrigin(host: string | null) {
+  const base = (host ?? "").replace(/^admin\./, "");
+  if (base.startsWith("localhost")) return `http://${base}`;
+  return `https://${process.env.COMING_SOON === "1" ? "beta" : "www"}.${base}`;
+}

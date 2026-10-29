@@ -4,8 +4,10 @@ import { NextResponse, type NextRequest } from "next/server";
 // Everything is public to read except these, which need a session (writing is guarded by RLS regardless).
 const PRIVATE_PATHS = ["/onboarding", "/rate", "/settings", "/admin", "/suspended", "/notifications"];
 
-export async function updateSession(request: NextRequest) {
-  let response = NextResponse.next({ request });
+// `rewriteTo` serves another path at this URL (the admin site maps its paths onto /admin).
+export async function updateSession(request: NextRequest, rewriteTo?: URL) {
+  const pass = () => (rewriteTo ? NextResponse.rewrite(rewriteTo, { request }) : NextResponse.next({ request }));
+  let response = pass();
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -17,7 +19,7 @@ export async function updateSession(request: NextRequest) {
         },
         setAll(cookiesToSet, headers) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          response = NextResponse.next({ request });
+          response = pass();
           cookiesToSet.forEach(({ name, value, options }) =>
             response.cookies.set(name, value, options),
           );

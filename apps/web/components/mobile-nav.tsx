@@ -5,6 +5,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { BellIcon, HomeIcon, LogInIcon, PlusIcon, TrophyIcon } from "lucide-react";
 import { Avatar } from "@/components/avatar";
 import { hidesMobileNav } from "@/lib/mobile-nav";
+import { showTab } from "@/lib/home-tab";
 import { cn } from "@/lib/utils";
 
 type Viewer = { handle: string; avatar: string | null; photo: string | null };
@@ -17,6 +18,13 @@ export function MobileNav({ viewer, unread }: { viewer: Viewer | null; unread: n
   if (hidesMobileNav(pathname)) return null;
 
   const rankings = pathname.startsWith("/top") || (pathname === "/" && onRankings);
+  // Already on Home: switch its tab in place (instant) instead of reloading the page from the server.
+  const stayHome = (e: React.MouseEvent, v: "takes" | "rankings") => {
+    if (pathname !== "/") return;
+    e.preventDefault();
+    showTab(v);
+    window.scrollTo({ top: 0 });
+  };
   const tab = (active: boolean) =>
     cn(
       "relative flex h-14 flex-col items-center justify-center gap-0.5 text-[0.6875rem] font-semibold outline-none transition-colors focus-visible:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
@@ -35,12 +43,12 @@ export function MobileNav({ viewer, unread }: { viewer: Viewer | null; unread: n
           viewer ? "grid-cols-5" : "grid-cols-3",
         )}
       >
-        <Link href="/" aria-current={pathname === "/" && !onRankings ? "page" : undefined} className={tab(pathname === "/" && !onRankings)}>
+        <Link href="/" onClick={(e) => stayHome(e, "takes")} aria-current={pathname === "/" && !onRankings ? "page" : undefined} className={tab(pathname === "/" && !onRankings)}>
           {dot(pathname === "/" && !onRankings)}
           <HomeIcon aria-hidden className="size-[22px]" />
           Home
         </Link>
-        <Link href="/?tab=rankings" aria-current={rankings ? "page" : undefined} className={tab(rankings)}>
+        <Link href="/?tab=rankings" onClick={(e) => stayHome(e, "rankings")} aria-current={rankings ? "page" : undefined} className={tab(rankings)}>
           {dot(rankings)}
           <TrophyIcon aria-hidden className="size-[22px]" />
           Rankings

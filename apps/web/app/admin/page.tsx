@@ -1,32 +1,34 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { headers } from "next/headers";
 import {
   AlertTriangleIcon,
+  ArrowUpRightIcon,
+  CrownIcon,
   ClipboardListIcon,
   FlagIcon,
   LayoutDashboardIcon,
   SearchIcon,
-  ShieldCheckIcon,
   StoreIcon,
   UsersRoundIcon,
   UtensilsIcon,
 } from "lucide-react";
+import { appOrigin, getAdminStatus, getAdmins, getInvites, getPersonContent, getPlace, type AdminAccount, type AdminInvite, type AdminPlace, type PersonContent } from "@/lib/admin";
 import { getCurrentUser } from "@/lib/auth";
-import { findPeople, getAdminCounts, getModerationLog, getOpenReports, getPendingDishes, isAdmin, type LogEntry } from "@/lib/admin";
+import { findPeople, getAdminCounts, getModerationLog, getOpenReports, getPendingDishes, type LogEntry } from "@/lib/admin";
 import { dishHref } from "@/lib/dishes";
 import { getRestaurants } from "@/lib/restaurants";
 import { timeAgo } from "@/lib/time";
 import { cn } from "@/lib/utils";
 import { REPORT_REASONS } from "@/lib/validation";
-import { BackLink } from "@/components/back-link";
 import { DietMark } from "@/components/diet-mark";
 import { PageLoader } from "@/components/loader";
-import { PageShell } from "@/components/page-shell";
 import { Input } from "@/components/ui/input";
-import { approveDish, dismissReports, removeContent } from "./actions";
+import { approveDish, cancelInvite, deleteRestaurant, dismissReports, removeAdmin, removeContent } from "./actions";
 import { ActionButton, AddRestaurantForm, BanControls } from "./controls";
+import { AddDishForm, DishEditor, EditRestaurantForm, InviteAdminForm } from "./forms";
+import { AdminShell, ChangeDefaultPassword, NotAdmin } from "./shell";
 
 export const metadata: Metadata = { title: "Admin · Nomrank", robots: { index: false } };
 
@@ -36,6 +38,7 @@ const TABS = [
   { key: "reports", label: "Reports", icon: FlagIcon },
   { key: "restaurants", label: "Restaurants", icon: StoreIcon },
   { key: "people", label: "People", icon: UsersRoundIcon },
+  { key: "admins", label: "Admins", icon: CrownIcon },
   { key: "log", label: "Log", icon: ClipboardListIcon },
 ] as const;
 type Tab = (typeof TABS)[number]["key"];
@@ -46,37 +49,37 @@ const WHAT = { rating: "Take", comment: "Comment", dish: "Dish" } as const;
 
 export default function AdminPage({ searchParams }: PageProps<"/admin">) {
   return (
-    <PageShell wide>
+    <AdminShell>
       <Suspense fallback={<PageLoader />}>
         <Admin searchParams={searchParams} />
       </Suspense>
-    </PageShell>
+    </AdminShell>
   );
 }
 
 async function Admin({ searchParams }: Pick<PageProps<"/admin">, "searchParams">) {
-  const { supabase } = await getCurrentUser();
-  // Not an admin: the page doesn't exist for you (the database refuses the actions regardless).
-  if (!(await isAdmin(supabase))) notFound();
+  // Signed out → the admin sign-in. Signed in but not an admin → say so (the database refuses the actions regardless).
+  const { supabase, userId } = await getCurrentUser();
+  const status = await getAdminStatus(supabase);
+  if (!status.admin) return <NotAdmin />;
+  if (status.default_password) return <ChangeDefaultPassword />; // the superadmin's first sign-in
   const params = await searchParams;
+  const app = appOrigin((await headers()).get("host")); // links to public pages go to the app, not this site
+  const place = typeof params.place === "string" ? params.place : "";
+  const person = typeof params.person === "string" ? params.person : "";
   const tab: Tab = TABS.some((t) => t.key === params.tab) ? (params.tab as Tab) : "overview";
   const q = typeof params.q === "string" ? params.q : "";
   const counts = await getAdminCounts(supabase);
   const badge: Partial<Record<Tab, number>> = { dishes: counts.pending, reports: counts.reports };
 
   return (
-    <div className="pb-10">
-      <BackLink href="/" />
-      <h1 className="mt-2 flex items-center gap-2 text-2xl leading-tight font-bold tracking-tight">
-        <ShieldCheckIcon aria-hidden className="size-6 text-mustard" />
-        Admin
-      </h1>
-
-      <nav aria-label="Admin sections" className="mt-4 flex gap-1 overflow-x-auto border-b border-hairline [scrollbar-width:none]">
+    <div>
+      <h1 className="sr-only">Nomrank admin</h1>
+      <nav aria-label="Admin sections" className="flex gap-1 overflow-x-auto border-b border-hairline [scrollbar-width:none]">
         {TABS.map(({ key, label, icon: Icon }) => (
           <Link
             key={key}
-            href={key === "overview" ? "/admin" : `/admin?tab=${key}`}
+            href={key === "overview" ? "/" : `/?tab=${key}`}
             replace
             aria-current={tab === key ? "page" : undefined}
             className={cn(
@@ -96,13 +99,23 @@ async function Admin({ searchParams }: Pick<PageProps<"/admin">, "searchParams">
         {tab === "overview" ? (
           <Overview counts={counts} log={(await getModerationLog(supabase)).slice(0, 8)} />
         ) : tab === "dishes" ? (
-          <Dishes dishes={await getPendingDishes(supabase)} />
+          <Dishes dishes={await getPendingDishes(supabase)} app={app} />
         ) : tab === "reports" ? (
-          <Reports groups={await getOpenReports(supabase)} />
+          <Reports groups={await getOpenReports(supabase)} app={app} />
         ) : tab === "restaurants" ? (
-          <Restaurants restaurants={await getRestaurants(supabase)} />
+          place ? (
+            <Place place={await getPlace(supabase, place)} app={app} />
+          ) : (
+            <Restaurants restaurants={await getRestaurants(supabase)} />
+          )
         ) : tab === "people" ? (
-          <People q={q} people={await findPeople(supabase, q)} />
+          person ? (
+            <Person content={await getPersonContent(supabase, person)} app={app} />
+          ) : (
+            <People q={q} people={await findPeople(supabase, q)} />
+          )
+        ) : tab === "admins" ? (
+          <Admins admins={await getAdmins(supabase)} invites={status.super ? await getInvites(supabase) : []} me={userId} isSuper={status.super} />
         ) : (
           <Log entries={await getModerationLog(supabase)} />
         )}
@@ -113,10 +126,10 @@ async function Admin({ searchParams }: Pick<PageProps<"/admin">, "searchParams">
 
 function Overview({ counts, log }: { counts: Awaited<ReturnType<typeof getAdminCounts>>; log: LogEntry[] }) {
   const stats = [
-    { label: "Dishes to review", value: counts.pending, href: "/admin?tab=dishes", icon: UtensilsIcon, urgent: counts.pending > 0 },
-    { label: "Open reports", value: counts.reports, href: "/admin?tab=reports", icon: FlagIcon, urgent: counts.reports > 0 },
-    { label: "Banned accounts", value: counts.banned, href: "/admin?tab=people", icon: AlertTriangleIcon, urgent: false },
-    { label: "People", value: counts.people, href: "/admin?tab=people", icon: UsersRoundIcon, urgent: false },
+    { label: "Dishes to review", value: counts.pending, href: "/?tab=dishes", icon: UtensilsIcon, urgent: counts.pending > 0 },
+    { label: "Open reports", value: counts.reports, href: "/?tab=reports", icon: FlagIcon, urgent: counts.reports > 0 },
+    { label: "Banned accounts", value: counts.banned, href: "/?tab=people", icon: AlertTriangleIcon, urgent: false },
+    { label: "People", value: counts.people, href: "/?tab=people", icon: UsersRoundIcon, urgent: false },
   ];
   return (
     <div className="flex flex-col gap-8">
@@ -141,7 +154,7 @@ function Overview({ counts, log }: { counts: Awaited<ReturnType<typeof getAdminC
   );
 }
 
-function Dishes({ dishes }: { dishes: Awaited<ReturnType<typeof getPendingDishes>> }) {
+function Dishes({ dishes, app }: { dishes: Awaited<ReturnType<typeof getPendingDishes>>; app: string }) {
   if (!dishes.length) return <Empty icon={UtensilsIcon}>No dishes waiting. New ones people add show up here.</Empty>;
   return (
     <ul className="stagger grid gap-3 lg:grid-cols-2">
@@ -149,7 +162,7 @@ function Dishes({ dishes }: { dishes: Awaited<ReturnType<typeof getPendingDishes
         <li key={d.id} className={CARD}>
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <Link href={dishHref(d.restaurant.slug, d.name)} className="flex items-center gap-1.5 font-semibold hover:underline">
+              <Link href={`${app}${dishHref(d.restaurant.slug, d.name)}`} className="flex items-center gap-1.5 font-semibold hover:underline">
                 <DietMark diet={d.diet} className="size-3 shrink-0" />
                 <span className="wrap-anywhere">{d.name}</span>
               </Link>
@@ -157,7 +170,7 @@ function Dishes({ dishes }: { dishes: Awaited<ReturnType<typeof getPendingDishes
                 {d.restaurant.name}, {d.restaurant.area}
               </p>
               <p className="mt-1 text-xs text-faint">
-                Added {d.by ? <Link href={`/u/${d.by}`} className="font-semibold text-muted-foreground hover:underline">by @{d.by}</Link> : "by a deleted account"} ·{" "}
+                Added {d.by ? <Link href={`/?tab=people&person=${d.by}`} className="font-semibold text-muted-foreground hover:underline">by @{d.by}</Link> : "by a deleted account"} ·{" "}
                 {timeAgo(d.created_at)}
               </p>
             </div>
@@ -178,7 +191,7 @@ function Dishes({ dishes }: { dishes: Awaited<ReturnType<typeof getPendingDishes
   );
 }
 
-function Reports({ groups }: { groups: Awaited<ReturnType<typeof getOpenReports>> }) {
+function Reports({ groups, app }: { groups: Awaited<ReturnType<typeof getOpenReports>>; app: string }) {
   if (!groups.length) return <Empty icon={FlagIcon}>No open reports. All clear.</Empty>;
   return (
     <ul className="stagger flex flex-col gap-3">
@@ -202,7 +215,7 @@ function Reports({ groups }: { groups: Awaited<ReturnType<typeof getOpenReports>
                   {g.target.author && (
                     <>
                       {" · by "}
-                      <Link href={`/u/${g.target.author}`} className="font-semibold text-foreground hover:underline">
+                      <Link href={`/?tab=people&person=${g.target.author}`} className="font-semibold text-foreground hover:underline">
                         @{g.target.author}
                       </Link>
                     </>
@@ -210,7 +223,7 @@ function Reports({ groups }: { groups: Awaited<ReturnType<typeof getOpenReports>
                   {g.target.href && (
                     <>
                       {" · "}
-                      <Link href={g.target.href} className="font-semibold text-foreground underline-offset-4 hover:underline">
+                      <Link href={`${app}${g.target.href}`} className="font-semibold text-foreground underline-offset-4 hover:underline">
                         Open
                       </Link>
                     </>
@@ -277,10 +290,12 @@ function Restaurants({ restaurants }: { restaurants: Awaited<ReturnType<typeof g
         <ul className="mt-2 grid gap-x-8 sm:grid-cols-2 lg:grid-cols-3">
           {restaurants.map((r) => (
             <li key={r.id} className="border-b border-hairline">
-              <Link href={`/r/${r.slug}`} className="-mx-2 flex min-h-14 items-center justify-between gap-3 rounded-md px-2 py-2 hover:bg-muted">
+              <Link href={`/?tab=restaurants&place=${r.slug}`} className="-mx-2 flex min-h-14 items-center justify-between gap-3 rounded-md px-2 py-2 hover:bg-muted">
                 <span className="min-w-0">
                   <span className="block truncate text-sm font-semibold">{r.name}</span>
-                  <span className="block text-xs text-faint">{r.area}</span>
+                  <span className="block text-xs text-faint">
+                    {r.area}, {r.city}
+                  </span>
                 </span>
                 <span className="shrink-0 text-xs text-muted-foreground tabular-nums">{r.dishes.length} dishes</span>
               </Link>
@@ -295,7 +310,7 @@ function Restaurants({ restaurants }: { restaurants: Awaited<ReturnType<typeof g
 function People({ q, people }: { q: string; people: Awaited<ReturnType<typeof findPeople>> }) {
   return (
     <div className="flex flex-col gap-4">
-      <form action="/admin" className="relative max-w-md">
+      <form action="/" className="relative max-w-md">
         <input type="hidden" name="tab" value="people" />
         <SearchIcon aria-hidden className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input type="search" name="q" defaultValue={q} placeholder="Search by handle" aria-label="Search people by handle" className="h-11 bg-raised pl-10" />
@@ -307,7 +322,7 @@ function People({ q, people }: { q: string; people: Awaited<ReturnType<typeof fi
             <li key={p.id} className={cn(CARD, p.banned_at && "border-destructive/40")}>
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <Link href={`/u/${p.username}`} className="font-semibold hover:underline">
+                  <Link href={`/?tab=people&person=${p.username}`} className="font-semibold hover:underline">
                     @{p.username}
                   </Link>
                   {p.display_name && <span className="ml-1.5 text-sm text-muted-foreground">{p.display_name}</span>}
@@ -334,7 +349,20 @@ function Log({ entries }: { entries: LogEntry[] }) {
   return entries.length ? <LogList entries={entries} /> : <Empty icon={ClipboardListIcon}>Nothing yet. Admin actions are recorded here.</Empty>;
 }
 
-const VERBS: Record<string, string> = { approve: "approved", delete: "removed", dismiss: "dismissed reports on", ban: "banned", unban: "unbanned", add: "added" };
+const VERBS: Record<string, string> = {
+  approve: "approved",
+  delete: "removed",
+  dismiss: "dismissed reports on",
+  ban: "banned",
+  unban: "unbanned",
+  add: "added",
+  edit: "edited",
+  invite_admin: "invited an admin:",
+  cancel_invite: "cancelled an admin invitation",
+  accept_admin: "joined as an admin",
+  make_admin: "made an admin:",
+  remove_admin: "removed an admin:",
+};
 const NOUNS: Record<string, string> = { dish: "a dish", rating: "a take", comment: "a comment", account: "an account", restaurant: "a restaurant" };
 
 function LogList({ entries }: { entries: LogEntry[] }) {
@@ -367,6 +395,195 @@ function Empty({ icon: Icon, children }: { icon: React.ElementType; children: Re
         <Icon aria-hidden className="size-5 text-mustard" />
       </span>
       <p className="text-sm text-muted-foreground">{children}</p>
+    </div>
+  );
+}
+
+// One restaurant: fix its details, manage its menu, or delete it.
+function Place({ place, app }: { place: AdminPlace | null; app: string }) {
+  if (!place) return <Empty icon={StoreIcon}>That restaurant doesn&apos;t exist (it may have been deleted).</Empty>;
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Link href="/?tab=restaurants" className="text-sm font-semibold text-muted-foreground hover:text-foreground">
+          ← All restaurants
+        </Link>
+        <Link href={`${app}/r/${place.slug}`} className="inline-flex items-center gap-1 text-sm font-semibold text-muted-foreground hover:text-foreground">
+          See it on Nomrank <ArrowUpRightIcon aria-hidden className="size-4" />
+        </Link>
+      </div>
+      <section aria-labelledby="place-details" className={CARD}>
+        <h2 id="place-details" className="mb-4 font-semibold">
+          {place.name}
+        </h2>
+        <EditRestaurantForm place={place} />
+      </section>
+      <section aria-labelledby="menu" className={CARD}>
+        <h2 id="menu" className="font-semibold">
+          Menu · {place.dishes.length} {place.dishes.length === 1 ? "dish" : "dishes"}
+        </h2>
+        <p className="mt-1 mb-4 text-sm text-muted-foreground">Dishes you add go live straight away and join their food list by name.</p>
+        <AddDishForm restaurantId={place.id} />
+        {place.dishes.length > 0 && (
+          <ul className="mt-5 divide-y divide-hairline border-t border-hairline">
+            {place.dishes.map((d) => (
+              <li key={d.id} className="py-3">
+                <DishEditor dish={d}>
+                  <span className="text-xs text-faint tabular-nums">
+                    {d.approved_at ? `${d.rating_count} ${d.rating_count === 1 ? "rating" : "ratings"}` : "Waiting for review"}
+                  </span>
+                  <ActionButton run={removeContent} args={["dish", d.id, "Removed by an admin"]} label="Remove" icon="remove" done="Dish removed" confirm="Remove this dish and its ratings?" />
+                </DishEditor>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+      <section aria-labelledby="danger" className={cn(CARD, "border-destructive/40")}>
+        <h2 id="danger" className="font-semibold">
+          Delete this restaurant
+        </h2>
+        <p className="mt-1 mb-4 text-sm text-muted-foreground">Removes it with every dish, take, photo and comment on it. This can&apos;t be undone.</p>
+        <ActionButton run={deleteRestaurant} args={[place.id]} label="Delete restaurant" icon="remove" done={`${place.name} deleted`} confirm={`Delete ${place.name}?`} tone="danger" />
+      </section>
+    </div>
+  );
+}
+
+// One person: ban or unban, and remove any of their takes or comments.
+function Person({ content, app }: { content: PersonContent | null; app: string }) {
+  if (!content) return <Empty icon={UsersRoundIcon}>No one has that handle.</Empty>;
+  const { person, takes, comments } = content;
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Link href="/?tab=people" className="text-sm font-semibold text-muted-foreground hover:text-foreground">
+          ← All people
+        </Link>
+        <Link href={`${app}/u/${person.username}`} className="inline-flex items-center gap-1 text-sm font-semibold text-muted-foreground hover:text-foreground">
+          See their profile <ArrowUpRightIcon aria-hidden className="size-4" />
+        </Link>
+      </div>
+      <section className={cn(CARD, person.banned_at && "border-destructive/40")}>
+        <h2 className="font-semibold">
+          @{person.username}
+          {person.display_name && <span className="ml-1.5 font-normal text-muted-foreground">{person.display_name}</span>}
+          {person.banned_at && <span className="ml-2 rounded-full bg-destructive/15 px-2 py-0.5 text-xs font-semibold text-destructive">Banned</span>}
+        </h2>
+        <div className="mt-3">
+          <BanControls account={person.id} handle={person.username} banned={Boolean(person.banned_at)} />
+        </div>
+      </section>
+      <section aria-labelledby="their-takes">
+        <h2 id="their-takes" className={OVERLINE}>
+          Takes and ratings · {takes.length}
+        </h2>
+        {takes.length ? (
+          <ul className="mt-2 divide-y divide-hairline">
+            {takes.map((t) => (
+              <li key={t.id} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                  <Link href={`${app}/review/${t.id}`} className="text-sm font-semibold hover:underline">
+                    {t.score}/10 · {t.dish?.name ?? "a dish"}
+                    {t.dish && <span className="font-normal text-muted-foreground"> at {t.dish.restaurant.name}</span>}
+                  </Link>
+                  {t.take && <p className="mt-0.5 line-clamp-3 text-sm wrap-anywhere text-muted-foreground">{t.take}</p>}
+                  <p className="mt-0.5 text-xs text-faint">{timeAgo(t.created_at)}</p>
+                </div>
+                <ActionButton run={removeContent} args={["rating", t.id, "Removed by an admin"]} label="Remove" icon="remove" done="Take removed" confirm="Remove this take?" />
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-2 text-sm text-muted-foreground">Nothing rated yet.</p>
+        )}
+      </section>
+      <section aria-labelledby="their-comments">
+        <h2 id="their-comments" className={OVERLINE}>
+          Comments · {comments.length}
+        </h2>
+        {comments.length ? (
+          <ul className="mt-2 divide-y divide-hairline">
+            {comments.map((c) => (
+              <li key={c.id} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                  <Link href={`${app}/review/${c.rating_id}#comments`} className="line-clamp-3 text-sm wrap-anywhere hover:underline">
+                    {c.body}
+                  </Link>
+                  <p className="mt-0.5 text-xs text-faint">{timeAgo(c.created_at)}</p>
+                </div>
+                <ActionButton run={removeContent} args={["comment", c.id, "Removed by an admin"]} label="Remove" icon="remove" done="Comment removed" confirm="Remove this comment?" />
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-2 text-sm text-muted-foreground">No comments yet.</p>
+        )}
+      </section>
+    </div>
+  );
+}
+
+// Who can use this site. Only the superadmin invites or removes admins; everyone else sees the list.
+function Admins({ admins, invites, me, isSuper }: { admins: AdminAccount[]; invites: AdminInvite[]; me: string; isSuper: boolean }) {
+  return (
+    <div className="flex flex-col gap-6">
+      {isSuper ? (
+        <section aria-labelledby="invite-admin" className={CARD}>
+          <h2 id="invite-admin" className="font-semibold">
+            Invite an admin
+          </h2>
+          <p className="mt-1 mb-4 text-sm text-muted-foreground">
+            We email them a link that works for 7 days. They sign in with the Nomrank account for that email address and accept.
+          </p>
+          <InviteAdminForm />
+        </section>
+      ) : (
+        <p className="text-sm text-muted-foreground">Only the superadmin can invite or remove admins.</p>
+      )}
+      {isSuper && invites.length > 0 && (
+        <section aria-labelledby="open-invites">
+          <h2 id="open-invites" className={OVERLINE}>
+            Waiting for a reply · {invites.length}
+          </h2>
+          <ul className="mt-2 divide-y divide-hairline">
+            {invites.map((i) => (
+              <li key={i.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+                <span className="min-w-0">
+                  <span className="font-semibold wrap-anywhere">{i.email}</span>
+                  <span className="block text-xs text-faint">Sent {timeAgo(i.created_at)}</span>
+                </span>
+                <ActionButton run={cancelInvite} args={[i.id]} label="Cancel" icon="dismiss" done="Invitation cancelled" />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      <section aria-labelledby="admin-list">
+        <h2 id="admin-list" className={OVERLINE}>
+          {admins.length} {admins.length === 1 ? "admin" : "admins"}
+        </h2>
+        <ul className="mt-2 divide-y divide-hairline">
+          {admins.map((a) => (
+            <li key={a.user_id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+              <span className="min-w-0">
+                <span className="font-semibold">@{a.username}</span>
+                {a.is_super && <span className="ml-2 rounded-full bg-mustard/15 px-2 py-0.5 text-xs font-semibold text-mustard">Superadmin</span>}
+                {a.display_name && !a.is_super && <span className="ml-1.5 text-sm text-muted-foreground">{a.display_name}</span>}
+                <span className="block text-xs text-faint">Admin since {timeAgo(a.created_at)}</span>
+              </span>
+              {a.user_id === me ? (
+                <span className="text-xs font-semibold text-faint">You</span>
+              ) : (
+                isSuper &&
+                !a.is_super && (
+                  <ActionButton run={removeAdmin} args={[a.user_id]} label="Remove admin" icon="remove" done={`@${a.username} is no longer an admin`} confirm={`Remove @${a.username} as an admin? We'll email them.`} />
+                )
+              )}
+            </li>
+          ))}
+        </ul>
+      </section>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { getViewer } from "@/lib/auth";
 import { getCity } from "@/lib/city";
-import { isAdmin } from "@/lib/admin";
+import { asHomeTab } from "@/lib/home-tab";
 import { unreadCount } from "@/lib/notifications";
 import { getRestaurants } from "@/lib/restaurants";
 import { getFeed, getMyVotes, type FeedSort } from "@/lib/ratings";
@@ -43,22 +43,19 @@ async function Home({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
   ]);
   const restaurants = filterMenus(city ? allRestaurants.filter((r) => r.city === city) : allRestaurants, prefs.show_diet);
   const reviews = feed;
-  const [votes, admin, unread] = await Promise.all([
+  const [votes, unread] = await Promise.all([
     profile ? getMyVotes(supabase, reviews.map((r) => r.id)) : {},
-    profile ? isAdmin(supabase) : false,
     profile && userId ? unreadCount(supabase, userId) : 0,
   ]);
   return (
     <HomeView
-      key={tab === "rankings" ? "rankings" : "takes"} // the nav's Rankings link lands on that tab even when already on "/"
       profile={profile}
       restaurants={restaurants}
       feed={{ sort, reviews, votes }}
       leaders={listLeaders(lists, city ? listed.filter((d) => d.restaurant.city === city) : listed, rankings, prefs.show_diet)}
       city={city}
-      admin={admin}
       unread={unread}
-      initialView={tab === "rankings" ? "rankings" : "takes"}
+      initialView={asHomeTab(typeof tab === "string" ? tab : null)}
       showDiet={prefs.show_diet}
       notice={account === "deleted" ? "Your account and everything in it has been deleted." : undefined}
     />
