@@ -28,3 +28,8 @@ to the Site URL. Keep `https://beta.nomrank.in/**` and the main domain on that l
 two above they are not pasted anywhere: the app builds and sends them itself (`apps/web/lib/admin-email.ts`, through Resend)
 from `Nomrank Admin <admin@nomrank.in>`. Resend needs the `nomrank.in` domain verified, which `hello@nomrank.in` already needs.
 Edit the wording in the code; these files are only a preview.
+
+## Waitlist welcome (nothing to paste)
+
+`waitlist-welcome.html` is a sample render of the email people get when they join the waitlist. The app builds and sends it
+(`apps/web/lib/waitlist-email.ts`, from `hello@nomrank.in`); edit the wording in the code. It is only a preview.

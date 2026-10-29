@@ -91,7 +91,7 @@ export function waitlistEmail(siteUrl: string) {
                 <td class="hero" align="center" bgcolor="${PAPER}" style="background:${PAPER};border:1px solid ${HAIRLINE};border-radius:28px;padding:32px 36px 40px 36px;">
                   <img src="${site}/email/must-try-10.png" width="184" height="184" alt="10/10" style="display:block;margin:0 auto;width:184px;height:184px;border:0;outline:none;font-family:${DISPLAY};font-size:48px;line-height:184px;font-weight:900;color:${MUSTARD};text-align:center;">
                   <h1 class="hero-title" style="margin:16px 0 0 0;font-family:${DISPLAY};font-size:44px;line-height:46px;font-weight:900;letter-spacing:-1.5px;color:${SPOTLIGHT};text-align:center;">You're on the list<span style="color:${MUSTARD};">.</span></h1>
-                  <p style="margin:12px auto 0 auto;max-width:360px;font-family:${BODY};font-size:16px;line-height:24px;color:${MUTED};text-align:center;">We'll email you once more, on the day Nomrank opens.</p>
+                  <p style="margin:12px auto 0 auto;max-width:360px;font-family:${BODY};font-size:16px;line-height:24px;color:${MUTED};text-align:center;">Nomrank is opening in Bengaluru, Mumbai, Delhi and Hyderabad. We'll email you once more, on the day it does.</p>
                 </td>
               </tr>
             </table>
@@ -155,7 +155,7 @@ export function waitlistEmail(siteUrl: string) {
   const text = [
     "You're on the list.",
     "",
-    "We'll email you once more, on the day Nomrank opens.",
+    "Nomrank is opening in Bengaluru, Mumbai, Delhi and Hyderabad. We'll email you once more, on the day it does.",
     "",
     "Nomrank is where you rate the dish, not the place. The same restaurant can make a legendary dosa and a forgettable vada, and soon you'll know which is which.",
     "",
