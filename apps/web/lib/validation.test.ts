@@ -54,7 +54,11 @@ describe("ratingSchema", () => {
     expect(ratingSchema.parse({ score: "8.5", take: "" }).score).toBe(8.5);
   });
 
-  it.each([0, 0.5, 11, 7.25, "x"])("rejects score %j", (score) => {
+  it("accepts 0.5 as the lowest score", () => {
+    expect(ratingSchema.parse({ score: "0.5", take: "" }).score).toBe(0.5);
+  });
+
+  it.each([0, 0.25, 11, 7.25, "x"])("rejects score %j", (score) => {
     expect(ratingSchema.safeParse({ score, take: "" }).success).toBe(false);
   });
 

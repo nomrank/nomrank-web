@@ -73,7 +73,7 @@ describe("tasteMatch", () => {
     const theirs = [rated("Masala Dosa", "ctr", 4), rated("Idli", "mtr", 8), rated("Filter Coffee", "bcb", 7)];
     expect(tasteMatch(mine, theirs)).toEqual({
       common: 3,
-      percent: Math.round(100 * (1 - 5 / 3 / 9)),
+      percent: Math.round(100 * (1 - 5 / 3 / 9.5)),
       split: { dish: "Masala Dosa", place: "CTR", mine: 9, theirs: 4 },
     });
   });

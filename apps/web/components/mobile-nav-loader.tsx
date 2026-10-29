@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import { connection } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { unreadCount } from "@/lib/notifications";
 import { MobileNav } from "@/components/mobile-nav";
@@ -6,6 +7,7 @@ import { MobileNav } from "@/components/mobile-nav";
 // Reads the host and session cookie, so the layout streams it in under <Suspense>. Unlike getViewer() it never
 // redirects: the nav sits on every page, including sign-in and onboarding, where a redirect here would loop.
 export async function MobileNavLoader() {
+  await connection(); // session checks read the clock (token expiry), which can't happen while prerendering
   // Pre-launch the main domain rewrites "/" to the waitlist page (see proxy.ts), so the URL alone can't tell us.
   const host = (await headers()).get("host") ?? "";
   if (process.env.COMING_SOON === "1" && !host.startsWith("beta.")) return null;

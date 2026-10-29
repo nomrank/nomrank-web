@@ -1,16 +1,16 @@
 import { Suspense } from "react";
 import type { Metadata, Viewport } from "next";
-import { Geist, Plus_Jakarta_Sans, Suez_One } from "next/font/google";
+import { Geist, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { NavigationTracker } from "@/components/back-link";
 import { MobileNavLoader } from "@/components/mobile-nav-loader";
+import { NavProgress } from "@/components/nav-progress";
 import { Toaster } from "@/components/toaster";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
-// Plus Jakarta Sans sets the wordmark and Suez One the "n" in the mark (the owner's picks); Geist is the UI face.
+// Plus Jakarta Sans sets the wordmark (the owner's pick); Geist is the UI face.
 const jakarta = Plus_Jakarta_Sans({ variable: "--font-jakarta", subsets: ["latin"], weight: "800" });
-const suez = Suez_One({ variable: "--font-suez", subsets: ["latin"], weight: "400" });
 const geist = Geist({ variable: "--font-geist", subsets: ["latin"] });
 
 // metadataBase makes link-preview image URLs absolute. Set NEXT_PUBLIC_SITE_URL to the real address once deployed.
@@ -29,11 +29,14 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${jakarta.variable} ${suez.variable} ${geist.variable} h-full antialiased`}>
+    <html lang="en" className={`${jakarta.variable} ${geist.variable} h-full antialiased`}>
       <body className="flex min-h-dvh flex-col bg-background">
         {/* The pathname is request data, so it streams in rather than blocking the page shell. */}
         <Suspense fallback={null}>
           <NavigationTracker />
+        </Suspense>
+        <Suspense fallback={null}>
+          <NavProgress />
         </Suspense>
         {children}
         <Suspense fallback={null}>

@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { DishDetail } from "./restaurants";
 import { allows, type ShowDiet } from "./diet";
 import { dishSlug, keyFromDishSlug } from "./dishes";
+import type { City } from "./cities";
 
 // A food list ("Dosa", "Biryani"): fixed, set in the database. `region` is the food's home, for Tastes like home.
 export type FoodList = { id: string; name: string; region: { name: string; demonym: string } | null };
@@ -39,17 +40,18 @@ export async function getRankings(supabase: SupabaseClient, filter?: { list?: st
 }
 
 // One list, best first: ranked dishes by rank (ties: more ratings, then name), then the unrated ones by name.
-export async function getRankedList(supabase: SupabaseClient, listId: string): Promise<RankedDish[]> {
+// With a `city`, only that city's dishes (the order is the same; positions are recounted by the page).
+export async function getRankedList(supabase: SupabaseClient, listId: string, city: City | null = null): Promise<RankedDish[]> {
   const [rankings, dishes] = await Promise.all([
     getRankings(supabase, { list: listId }),
-    supabase
-      .from("dishes")
-      .select("id, name, diet, rating_count, avg_score, restaurant:restaurants(slug, name, area)")
-      .eq("space_id", listId)
-      .returns<DishDetail[]>(),
+    (city ? dishesIn(listId).eq("restaurant.city", city) : dishesIn(listId)).returns<DishDetail[]>(),
   ]);
   if (dishes.error) throw dishes.error;
   return rankList(dishes.data, rankings);
+
+  function dishesIn(id: string) {
+    return supabase.from("dishes").select("id, name, diet, rating_count, avg_score, restaurant:restaurants!inner(slug, name, area)").eq("space_id", id);
+  }
 }
 
 export function rankList(dishes: DishDetail[], rankings: Ranking[]): RankedDish[] {
@@ -69,14 +71,14 @@ type Listed = {
   space_id: string | null;
   avg_score: number | null;
   rating_count: number;
-  restaurant: { slug: string; name: string };
+  restaurant: { slug: string; name: string; city: string };
 };
 
 // Dishes that sit in a list, for the Rankings tab.
 export async function getListedDishes(supabase: SupabaseClient) {
   const { data, error } = await supabase
     .from("dishes")
-    .select("id, name, diet, space_id, avg_score, rating_count, restaurant:restaurants(slug, name)")
+    .select("id, name, diet, space_id, avg_score, rating_count, restaurant:restaurants(slug, name, city)")
     .not("space_id", "is", null)
     .returns<Listed[]>();
   if (error) throw error;

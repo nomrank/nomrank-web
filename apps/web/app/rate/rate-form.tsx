@@ -38,7 +38,7 @@ export function RateForm({ dish, userId, existing }: { dish: DishDetail; userId:
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!score) return setLocalError("Pick a score from 1 to 10.");
+    if (!score) return setLocalError("Pick a score from 0.5 to 10.");
     setLocalError(undefined);
     const fd = new FormData(e.currentTarget);
     if (photosChanged) {

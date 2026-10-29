@@ -2,10 +2,10 @@
 
 import { startTransition, useDeferredValue, useEffect, useRef, useState, ViewTransition } from "react";
 import Link from "next/link";
-import { ChevronDownIcon, CrownIcon, PlusIcon, SearchIcon, XIcon } from "lucide-react";
+import { CrownIcon, PlusIcon, SearchIcon, XIcon } from "lucide-react";
 import type { Profile } from "@/lib/auth";
 import type { Restaurant } from "@/lib/restaurants";
-import type { DishDiet, ShowDiet } from "@/lib/diet";
+import type { ShowDiet } from "@/lib/diet";
 import { FEED_PAGE, groupMeals, type FeedSort, type Review, type Vote } from "@/lib/ratings";
 import { loadMoreTakes } from "@/app/feed-actions";
 import { BroadcastLoader } from "@/components/loader";
@@ -21,14 +21,16 @@ import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { PageShell } from "@/components/page-shell";
 import { Row, dishCount } from "@/components/row";
+import { CityPicker } from "@/components/city-picker";
+import type { City } from "@/lib/cities";
+import { DishGroupRow, groupDishes, type DishGroup } from "@/components/dish-group";
 
 type View = "takes" | "rankings" | "dishes" | "places";
 type Feed = { sort: FeedSort; reviews: Review[]; votes: Record<string, Vote> };
-type DishGroup = { key: string; name: string; spots: { id: string; name: string; diet: DishDiet; avg: number | null; count: number; place: Restaurant }[] };
 
-type HomeProps = { profile: Profile | null; restaurants: Restaurant[]; feed: Feed; leaders?: Leader[]; showDiet?: ShowDiet; notice?: string; admin?: boolean; unread?: number; initialView?: View };
+type HomeProps = { profile: Profile | null; restaurants: Restaurant[]; feed: Feed; leaders?: Leader[]; showDiet?: ShowDiet; notice?: string; admin?: boolean; unread?: number; initialView?: View; city?: City | null };
 
-export function HomeView({ profile, restaurants, feed, leaders = [], showDiet = "all", notice, admin = false, unread = 0, initialView = "takes" }: HomeProps) {
+export function HomeView({ profile, restaurants, feed, leaders = [], showDiet = "all", notice, admin = false, unread = 0, initialView = "takes", city = null }: HomeProps) {
   const [query, setQuery] = useState("");
   const [view, setView] = useState<View>(initialView);
   const q = dishKey(useDeferredValue(query));
@@ -92,6 +94,7 @@ export function HomeView({ profile, restaurants, feed, leaders = [], showDiet = 
       {/* Desktop: the feed on the left, a pinned side column on the right. Phones get the feed alone. */}
       <div className="flex flex-1 flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-start lg:gap-12 xl:gap-16">
         <div className="flex min-h-full flex-1 flex-col">
+          <CityPicker city={city} className="mb-3" />
           <div className="relative">
             <SearchIcon aria-hidden className="pointer-events-none absolute top-1/2 left-3.5 size-5 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -146,7 +149,7 @@ export function HomeView({ profile, restaurants, feed, leaders = [], showDiet = 
             {q ? (
               <Results q={q} restaurants={restaurants} />
             ) : view === "takes" ? (
-              <Takes key={feed.sort} feed={feed} viewer={profile?.username ?? null} />
+              <Takes key={`${feed.sort}-${city}`} feed={feed} viewer={profile?.username ?? null} />
             ) : view === "rankings" ? (
               <Rankings leaders={leaders} />
             ) : view === "dishes" ? (
@@ -196,65 +199,26 @@ function Rankings({ leaders }: { leaders: Leader[] }) {
   );
 }
 
-// The same dish at several places shows once; most-served dishes first.
-function groupDishes(restaurants: Restaurant[], q = "") {
-  const groups = new Map<string, DishGroup>();
-  for (const place of restaurants) {
-    for (const d of place.dishes) {
-      const key = dishKey(d.name);
-      if (q && !key.includes(q)) continue;
-      const g = groups.get(key) ?? { key, name: d.name, spots: [] };
-      g.spots.push({ id: d.id, name: d.name, diet: d.diet, avg: d.avg_score, count: d.rating_count, place });
-      groups.set(key, g);
-    }
-  }
-  return [...groups.values()].sort((a, b) => b.spots.length - a.spots.length || a.name.localeCompare(b.name));
-}
-
 function Dishes({ groups }: { groups: DishGroup[] }) {
   if (!groups.length) return <p className="text-muted-foreground">No dishes yet. Open a place and add the one you came for.</p>;
   return (
     <ul className="stagger divide-y divide-border">
       {groups.map((g) => (
         <li key={g.key}>
-          <DishGroupRow group={g} />
+          <DishGroupRow group={g} href={(s) => dishHref(s.place.slug, s.name)} />
         </li>
       ))}
     </ul>
   );
 }
 
-function DishGroupRow({ group: g }: { group: DishGroup }) {
-  const title = <span className="block text-base font-semibold wrap-anywhere">{g.name}</span>;
-
-  if (g.spots.length === 1) {
-    const { name, diet, avg, count, place } = g.spots[0];
-    return <Row href={dishHref(place.slug, name)} title={title} meta={<>{place.name} · <DishAvg avg={avg} count={count} orEmpty /></>} diet={diet} />;
-  }
-  return (
-    <details className="group">
-      <summary className="-mx-2 flex min-h-16 cursor-pointer list-none items-center gap-3 rounded-lg px-2 py-3 transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none [&::-webkit-details-marker]:hidden">
-        <span className="min-w-0 flex-1">
-          {title}
-          <span className="mt-0.5 block text-sm text-muted-foreground">At {g.spots.length} places</span>
-        </span>
-        <ChevronDownIcon aria-hidden className="size-5 shrink-0 text-foreground transition-transform duration-200 group-open:rotate-180" />
-      </summary>
-      <ul className="mb-2 ml-3 animate-[rise_320ms_var(--ease-out-expo)_both] divide-y divide-border border-l-2 border-mustard pl-3">
-        {g.spots.map(({ id, name, diet, avg, count, place }) => (
-          <li key={id}>
-            <Row href={dishHref(place.slug, name)} title={place.name} meta={<>{place.area} · <DishAvg avg={avg} count={count} orEmpty /></>} diet={diet} />
-          </li>
-        ))}
-      </ul>
-    </details>
-  );
-}
 
 // compact: the desktop side column, where the list is a quick index rather than the page.
 function ByArea({ restaurants, compact }: { restaurants: Restaurant[]; compact?: boolean }) {
   if (restaurants.length === 0) return compact ? null : <p className="text-muted-foreground">No places yet. Check back soon.</p>;
-  const areas = Map.groupBy(restaurants, (r) => r.area);
+  // Across several cities an area is named with its city ("Bandra, Mumbai"); within one city the area alone.
+  const several = new Set(restaurants.map((r) => r.city)).size > 1;
+  const areas = Map.groupBy(restaurants, (r) => (several ? `${r.area}, ${r.city}` : r.area));
   const Heading = compact ? "h3" : "h2"; // aria-label, not aria-labelledby: area names have spaces, which break id lists
   return (
     <div className={cn("flex flex-col", compact ? "gap-5" : "gap-7")}>
@@ -424,9 +388,6 @@ function Takes({ feed, viewer }: { feed: Feed; viewer: string | null }) {
             )}
           >
             {s}
-            {s === "new" && (
-              <span aria-hidden className="ml-1.5 size-1.5 animate-[on-air_1.6s_ease-in-out_infinite] rounded-full bg-ketchup" />
-            )}
           </Link>
         ))}
       </nav>

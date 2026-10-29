@@ -130,7 +130,7 @@ One column, max 576px, 20px gutters, safe-area aware. Header: wordmark left, the
 ## What makes it Nomrank, not Letterboxd
 
 - **Bitten score disc:** scores sit in a Ketchup circle with a bite taken out of its top-right (after the logo's bites).
-- **Signal meter:** rating is 10 rising bars, like broadcast signal strength; the bars light up to your score.
+- **Rating plate:** rating is a ring of 10 slices, each split in two for half points; tap a slice or drag round it and the lit slices, the big number and the verdict all take the score's colour (ketchup to mustard). The slice just reached lifts out of the ring a touch. A hidden range input keeps keyboard and screen-reader use.
 - **On air:** a small Ketchup light pulses beside "New" on the feed.
 - **Agreement bar:** every take shows how much people agree with it, not just raw counts.
 

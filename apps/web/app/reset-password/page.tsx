@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Screen } from "@/components/screen";
+import { PageLoader } from "@/components/loader";
 import { createClient } from "@/lib/supabase/server";
 import { ResetForm } from "./reset-form";
 
@@ -10,7 +11,7 @@ export const metadata: Metadata = { title: "New password · Nomrank", robots: { 
 export default function ResetPasswordPage() {
   return (
     <Screen step={1}>
-      <Suspense>
+      <Suspense fallback={<PageLoader />}>
         <ResetGate />
       </Suspense>
     </Screen>

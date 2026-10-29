@@ -3,6 +3,7 @@
 -- Run: pnpm dlx supabase db query --linked -f supabase/demo/seed.sql   (safe to re-run: it clears old demo data first)
 -- Then attach demo photos: pnpm dlx supabase db query --linked -f supabase/demo/photos.sql
 -- And demo profiles (names, bios, favourites): pnpm dlx supabase db query --linked -f supabase/demo/profiles.sql
+-- Then the other launch cities (Mumbai, Delhi, Hyderabad): pnpm dlx supabase db query --linked -f supabase/demo/cities.sql
 begin;
 
 delete from auth.users where email like '%@demo.bitecast.test';

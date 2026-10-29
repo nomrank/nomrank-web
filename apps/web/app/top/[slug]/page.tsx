@@ -4,6 +4,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronRightIcon, CrownIcon, HouseHeartIcon, PlusIcon, ScaleIcon, SproutIcon, TrophyIcon, UsersRoundIcon } from "lucide-react";
 import { getViewer } from "@/lib/auth";
+import { getCity } from "@/lib/city";
+import { CityPicker } from "@/components/city-picker";
 import { shareList } from "@/lib/share";
 import { allows } from "@/lib/diet";
 import { dishHref } from "@/lib/dishes";
@@ -44,17 +46,19 @@ async function Ranking({ params }: Pick<PageProps<"/top/[slug]">, "params">) {
   const { supabase, userId, profile } = await getViewer();
   const list = await getList(supabase, decodeURIComponent(slug));
   if (!list) notFound();
+  const city = await getCity();
   const [all, prefs, lists, listed, rankings] = await Promise.all([
-    getRankedList(supabase, list.id),
+    getRankedList(supabase, list.id, city),
     getPreferences(supabase, userId),
     getLists(supabase),
     getListedDishes(supabase),
     getRankings(supabase),
   ]);
   const dishes = all.filter((d) => allows(prefs.show_diet, d.diet));
-  const ranked = dishes.filter((d) => d.rank !== null);
+  // Positions count within what's shown (the city and diet picked), so the list always reads 1, 2, 3.
+  const ranked = dishes.filter((d) => d.rank !== null).map((d, i) => ({ ...d, rank: i + 1 }));
   const unrated = dishes.filter((d) => d.rank === null);
-  const others = listLeaders(lists, listed, rankings, prefs.show_diet).filter((l) => l.list.id !== list.id);
+  const others = listLeaders(lists, city ? listed.filter((d) => d.restaurant.city === city) : listed, rankings, prefs.show_diet).filter((l) => l.list.id !== list.id);
 
   return (
     // Desktop: the ranking at reading width, with how it works and the other rankings pinned alongside.
@@ -66,7 +70,11 @@ async function Ranking({ params }: Pick<PageProps<"/top/[slug]">, "params">) {
             <TrophyIcon aria-hidden className="size-3.5" />
             Rankings
           </p>
-          <h1 className="mt-1 text-[1.75rem] leading-tight font-bold tracking-[-0.02em] wrap-anywhere">Top {list.name}</h1>
+          <h1 className="mt-1 text-[1.75rem] leading-tight font-bold tracking-[-0.02em] wrap-anywhere">
+            Top {list.name}
+            {city && <span className="text-muted-foreground"> in {city}</span>}
+          </h1>
+          <CityPicker city={city} className="my-3" />
           <p className="mt-1 text-sm text-muted-foreground">
             {dishCount(dishes.length)}
             {ranked.length > 0 && ` · ${ranked.length} ranked`}

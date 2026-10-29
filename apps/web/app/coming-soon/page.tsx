@@ -9,7 +9,7 @@ import { Wordmark } from "@/components/brand";
 
 export const metadata: Metadata = {
   title: "Nomrank · Rate the dish, not the place",
-  description: "Rate single dishes from 1 to 10. Join the waitlist to hear when Nomrank opens.",
+  description: "Rate single dishes from 1 to 10. Opening in Bengaluru, Mumbai, Delhi and Hyderabad. Join the waitlist to hear when Nomrank opens.",
   // Served at "/" (the proxy rewrites it here before launch), so "/" is the one address search engines should index.
   alternates: { canonical: "/" },
 };
@@ -56,7 +56,7 @@ export default function ComingSoonPage() {
             </span>
           </h1>
           <p className="hero-after mt-6 max-w-[40ch] text-[1.0625rem] leading-relaxed text-muted-foreground lg:text-[1.1875rem]">
-            Rate one dish at a time, from 1 to 10, and find the plates worth ordering. Nomrank opens soon.
+            Rate one dish at a time, from 1 to 10, and find the plates worth ordering. Opening soon in Bengaluru, Mumbai, Delhi and Hyderabad.
           </p>
           <WaitlistForm id="waitlist-email" className="hero-after mt-8 max-w-[32rem]" />
         </div>

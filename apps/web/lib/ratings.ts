@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { dietsFor, type DishDiet, type ShowDiet } from "./diet";
+import type { City } from "./cities";
 
 export type Vote = "facts" | "cap";
 export type Review = {
@@ -19,7 +20,7 @@ export type FeedSort = Sort | "following";
 
 // dishes!inner: a take only shows when its dish does (dishes waiting for approval are hidden from everyone but their creator).
 const REVIEW_FIELDS =
-  "id, score, take, facts_count, cap_count, comments_count, created_at, author:profiles!ratings_user_id_fkey(username, avatar, avatar_path), dish:dishes!inner(id, name, diet, rating_count, avg_score, restaurant:restaurants(slug, name, area)), photos:rating_photos(path, position)";
+  "id, score, take, facts_count, cap_count, comments_count, created_at, author:profiles!ratings_user_id_fkey(username, avatar, avatar_path), dish:dishes!inner(id, name, diet, rating_count, avg_score, restaurant:restaurants!inner(slug, name, area)), photos:rating_photos(path, position)";
 
 export const FEED_PAGE = 20;
 
@@ -60,19 +61,20 @@ function sorted<T extends { photos: { position: number }[] }>(rows: T[]) {
 }
 
 // The feed: everyone's takes by Top (net votes) or New, or only takes from the people you follow (`authors`), newest
-// first; one page at a time from `offset`, only dishes the diet preference allows.
+// first; one page at a time from `offset`, only dishes the diet preference allows, and only in `city` when one is picked.
 // shortcut: offset paging can repeat or skip a take when votes reorder Top between pages (the client drops repeats);
 // move to keyset paging if that shows up.
 export async function getFeed(
   supabase: SupabaseClient,
   sort: FeedSort,
   authors: string[] = [],
-  { offset = 0, limit = FEED_PAGE, show = "all" }: { offset?: number; limit?: number; show?: ShowDiet } = {},
+  { offset = 0, limit = FEED_PAGE, show = "all", city = null }: { offset?: number; limit?: number; show?: ShowDiet; city?: City | null } = {},
 ) {
   if (sort === "following" && !authors.length) return [];
   let q = supabase.from("ratings").select(REVIEW_FIELDS).not("take", "is", null);
   if (sort === "following") q = q.in("user_id", authors);
   if (show !== "all") q = q.in("dish.diet", dietsFor(show));
+  if (city) q = q.eq("dish.restaurant.city", city);
   q = sort === "top" ? q.order("net_votes", { ascending: false }).order("created_at", { ascending: false }) : q.order("created_at", { ascending: false });
   const { data, error } = await q.order("id").range(offset, offset + limit - 1).returns<Review[]>();
   if (error) throw error;
@@ -109,8 +111,8 @@ export async function getMyVotes(supabase: SupabaseClient, ratingIds: string[]) 
 export function summarize(scores: number[]) {
   const count = scores.length;
   const average = count ? scores.reduce((a, b) => a + b, 0) / count : null;
-  // Bars for 1…10; a half score counts with the whole number below it (8.5 → 8).
-  const spread = Array.from({ length: 10 }, (_, i) => scores.filter((s) => Math.floor(s) === i + 1).length);
+  // Bars for 1…10; a half score counts with the whole number below it (8.5 → 8), and 0.5 sits in the first bar.
+  const spread = Array.from({ length: 10 }, (_, i) => scores.filter((s) => Math.max(1, Math.floor(s)) === i + 1).length);
   return { count, average, spread };
 }
 

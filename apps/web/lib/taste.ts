@@ -78,7 +78,7 @@ export type TasteMatch = {
 };
 
 // How close two people's scores are on the dishes they've both rated: 100% means identical scores,
-// 0% means as far apart as 1 and 10 every time.
+// 0% means as far apart as 0.5 and 10 every time.
 export function tasteMatch(mine: Rated[], theirs: Rated[]): TasteMatch {
   const myScores = new Map(mine.map((r) => [dishOf(r), r.score]));
   const pairs = theirs.flatMap((r) => (myScores.has(dishOf(r)) ? [{ r, mine: myScores.get(dishOf(r))!, theirs: r.score }] : []));
@@ -87,7 +87,7 @@ export function tasteMatch(mine: Rated[], theirs: Rated[]): TasteMatch {
   const widest = pairs.reduce((a, b) => (Math.abs(b.mine - b.theirs) > Math.abs(a.mine - a.theirs) ? b : a));
   return {
     common: pairs.length,
-    percent: Math.round(100 * (1 - meanGap / 9)),
+    percent: Math.round(100 * (1 - meanGap / 9.5)),
     split:
       widest.mine === widest.theirs
         ? undefined

@@ -250,7 +250,7 @@ function VoteShow() {
         <Score score={9.5} size={44} />
       </div>
       <div className="mt-3">
-        <Verdict score={9.5} icon />
+        <Verdict score={9.5} />
       </div>
       <p className="mt-2 text-[0.9375rem] leading-relaxed">bitter in the best way. had two before 9am</p>
       <div className="mt-4">

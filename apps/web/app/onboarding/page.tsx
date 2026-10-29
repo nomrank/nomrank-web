@@ -3,13 +3,14 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { Screen } from "@/components/screen";
+import { PageLoader } from "@/components/loader";
 import { OnboardingForm, type Region } from "./onboarding-form";
 
 export const metadata: Metadata = { title: "Set up · Nomrank" };
 
 export default function OnboardingPage() {
   return (
-    <Suspense fallback={<Screen step={3}>{null}</Screen>}>
+    <Suspense fallback={<Screen step={3}><PageLoader /></Screen>}>
       <Onboarding />
     </Suspense>
   );

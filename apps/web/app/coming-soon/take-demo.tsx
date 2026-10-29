@@ -74,7 +74,7 @@ export function TakeDemo() {
             <Score score={8.5} size={52} />
           </div>
           <p className="mt-3 flex flex-wrap items-center gap-2 text-[1rem] font-semibold">
-            Idli sambar <Verdict score={8.5} icon />
+            Idli sambar <Verdict score={8.5} />
           </p>
           <p className="text-muted-foreground">from Udupi Corner Tiffins</p>
           <p className="mt-3 text-[0.9375rem] leading-relaxed">ordered 2, ended up eating 4. sambar refills just kept coming</p>

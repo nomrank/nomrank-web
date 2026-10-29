@@ -1,133 +1,159 @@
 "use client";
 
 import { useState } from "react";
+import { MinusIcon, PlusIcon } from "lucide-react";
+import { angleOf, point, scoreAtAngle, sector } from "@/lib/plate";
 import { formatScore, scoreColor, verdict } from "@/lib/ratings";
 import { cn } from "@/lib/utils";
 
-const STEPS = Array.from({ length: 19 }, (_, i) => 1 + i / 2); // 1, 1.5 … 10
+const OUTER = 137; // the ring is drawn 3 units inside its edge; a 6-unit round-joined stroke gives the soft corners
+const INNER = 91;
+const SLICES = Array.from({ length: 10 }, (_, i) => i + 1);
 
-// The score as a signal meter: 19 rising bars (half steps) that light up ketchup-to-mustard as you go.
-// A transparent range input covers the bars, so tapping, dragging and arrow keys all pick a score.
+// The score as a plate: 10 slices of one point each that fill ketchup-to-mustard as you go round; a half point fills half a slice.
+// Tap a slice or drag round the ring; −/+ step by half a point. The hidden range input keeps keyboard and screen-reader use.
 export function ScoreMeter({ score, onChange }: { score: number; onChange: (n: number) => void }) {
   const [from, setFrom] = useState(score);
-  // Mouse: the bars follow the cursor as a preview until you click; the click commits and locks them until the cursor
-  // leaves, so a stray drag can't change your score. Touch: drag across the bars or lift to pick; a vertical swipe is
-  // a page scroll (the browser cancels the touch) and picks nothing. Keyboard: the slider below.
-  const [hover, setHover] = useState<number | null>(null);
-  const [locked, setLocked] = useState(false);
   const [dragging, setDragging] = useState(false);
-  const shown = hover ?? score;
+  const color = score ? scoreColor(score) : undefined;
+
   const pick = (n: number) => {
     if (n === score) return;
     setFrom(score);
     onChange(n);
+    // A tick on Android as the score changes (no-op where unsupported or when the person prefers less motion).
+    if (navigator.userActivation?.hasBeenActive && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) navigator.vibrate?.(6);
   };
-  const valueAt = (e: React.PointerEvent<HTMLElement>) => {
+  const step = (by: number) => pick(Math.min(10, Math.max(0.5, score + by)));
+
+  const read = (e: React.PointerEvent<SVGSVGElement>, prev: number) => {
     const box = e.currentTarget.getBoundingClientRect();
-    const at = Math.min(1, Math.max(0, (e.clientX - box.left) / box.width));
-    return 1 + Math.round(at * 18) / 2; // same 1–10 half-step mapping as the slider underneath
+    const dx = e.clientX - (box.left + box.width / 2);
+    const dy = e.clientY - (box.top + box.height / 2);
+    return { v: scoreAtAngle(angleOf(dx, dy), prev), dist: Math.hypot(dx, dy) / (box.width / 300) };
   };
-  const onDown = (e: React.PointerEvent<HTMLElement>) => {
-    setHover(null);
-    if (e.pointerType === "mouse") {
-      pick(valueAt(e));
-      setLocked(true);
-    } else {
-      setDragging(true);
-      e.currentTarget.setPointerCapture(e.pointerId);
-    }
-  };
-  const onMove = (e: React.PointerEvent<HTMLElement>) => {
-    if (e.pointerType === "mouse") {
-      if (!locked) setHover(valueAt(e));
-    } else if (dragging) pick(valueAt(e));
-  };
-  const onEnd = () => {
-    setDragging(false);
-    setHover(null);
-    setLocked(false);
-  };
+
   return (
-    <div>
-      <div className="mb-3 flex items-end justify-between gap-3">
-        <label htmlFor="score" className="text-sm font-semibold">
-          Your score
-        </label>
-        <span aria-hidden className="flex items-baseline gap-2">
-          {shown > 0 && <span className="text-sm font-semibold text-muted-foreground">{verdict(shown).label}</span>}
-          <span className="inline-flex overflow-hidden text-3xl leading-none font-bold tabular-nums">
-            <span
-              key={shown}
-              className={cn(
-                shown ? "animate-[roll-up_140ms_var(--ease-out)] bg-(image:--score-gradient) bg-clip-text text-transparent" : "text-faint",
-                hover !== null && hover !== score && "opacity-70",
-              )}
-            >
-              {shown ? formatScore(shown) : "–"}
-            </span>
-            <span className="self-end text-base font-semibold text-faint">/10</span>
-          </span>
-        </span>
-      </div>
-      <div className="relative rounded-md has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring has-[:focus-visible]:ring-offset-4 has-[:focus-visible]:ring-offset-background">
-        <div aria-hidden className="flex h-32 items-end gap-1">
-          {STEPS.map((v) => {
-            const lit = v <= shown;
-            // Picking a score ripples outward from the previous one, 12ms per half step; a hover preview tracks instantly.
-            const changed = (v > from && v <= score) || (v > score && v <= from);
-            const delay = hover === null && changed ? Math.abs(v - from) * 24 : 0;
-            return (
-              <span
-                key={v}
-                className={cn(
-                  "flex-1 origin-bottom rounded-t-[3px] transition-[background-color,opacity,transform] duration-150 ease-[var(--ease-out)]",
-                  !lit && "bg-raised",
-                  lit && hover !== null && v > score && "opacity-60", // previewed, not picked yet
-                  v === shown && shown > 0 && "scale-y-[1.04]",
-                )}
-                style={{
-                  height: `${v * 10}%`,
-                  transitionDelay: `${delay}ms`,
-                  backgroundColor: lit ? scoreColor(v) : undefined,
-                }}
+    <div className="mx-auto w-full max-w-72">
+      <label htmlFor="score" className="sr-only">
+        Your score
+      </label>
+      <div className="relative rounded-full has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring has-[:focus-visible]:ring-offset-4 has-[:focus-visible]:ring-offset-background">
+        <svg
+          viewBox="0 0 300 300"
+          aria-hidden
+          className="block w-full touch-none select-none"
+          onPointerDown={(e) => {
+            const { v, dist } = read(e, 0);
+            if (dist > OUTER + 8 || dist < INNER - 12) return; // only the ring starts a gesture, not the middle
+            e.currentTarget.setPointerCapture(e.pointerId);
+            setDragging(true);
+            pick(v);
+          }}
+          onPointerMove={(e) => dragging && pick(read(e, score).v)}
+          onPointerUp={() => setDragging(false)}
+          onPointerCancel={() => setDragging(false)}
+        >
+          {SLICES.map((i) => {
+            // A slice is one point. Its fill is 0, half (the first half, for .5) or whole.
+            const fill = (s: number) => Math.min(1, Math.max(0, s - (i - 1)));
+            const a0 = (i - 1) * 36 + 2.5;
+            const a1 = i * 36 - 2.5;
+            const mid = (i - 0.5) * 36;
+            const changed = fill(from) !== fill(score);
+            // Picking ripples outward from the previous score, 30ms per slice; while dragging it tracks the finger with no delay.
+            const delay = !dragging && changed ? Math.abs(i - Math.ceil(from)) * 30 : 0;
+            const layer = (d: string, on: boolean) => (
+              <path
+                d={d}
+                strokeWidth={6}
+                strokeLinejoin="round"
+                className="transition-[fill,stroke,opacity] duration-200 ease-[var(--ease-out)] motion-reduce:transition-none"
+                style={{ fill: color, stroke: color, opacity: on ? 1 : 0, transitionDelay: `${delay}ms` }}
               />
             );
+            const [dx, dy] = [point(5, mid)[0] - 150, point(5, mid)[1] - 150]; // 5 units out along the slice's middle, rounded like the paths
+            return (
+              <g
+                key={i}
+                className="transition-transform duration-200 ease-[var(--ease-out)] motion-reduce:transition-none"
+                // The slice the score has reached lifts out of the ring a touch.
+                style={{ transform: score > i - 1 && score <= i ? `translate(${dx}px, ${dy}px)` : undefined }}
+              >
+                <path d={sector(a0, a1, OUTER, INNER)} strokeWidth={6} strokeLinejoin="round" className="fill-raised stroke-raised" />
+                {layer(sector(a0, mid, OUTER, INNER), fill(score) >= 0.5)}
+                {layer(sector(a0, a1, OUTER, INNER), fill(score) === 1)}
+              </g>
+            );
           })}
+          {Array.from({ length: 10 }, (_, i) => {
+            const [x, y] = point((OUTER + INNER) / 2, i * 36 + 18);
+            return (
+              <text
+                key={i}
+                x={x}
+                y={y}
+                textAnchor="middle"
+                dominantBaseline="central"
+                className={cn("pointer-events-none text-[15px] font-semibold tabular-nums transition-colors duration-200", score >= i + 1 ? "fill-studio" : "fill-faint")}
+              >
+                {i + 1}
+              </text>
+            );
+          })}
+        </svg>
+
+        <div aria-hidden className="pointer-events-none absolute inset-0 grid place-content-center text-center">
+          <span className="inline-flex h-[4.25rem] overflow-hidden text-[3.75rem] leading-[4.25rem] font-bold tabular-nums">
+            <span key={score} className={cn(score ? "animate-[roll-up_160ms_var(--ease-out)] motion-reduce:animate-none" : "text-faint")} style={{ color }}>
+              {score ? formatScore(score) : "–"}
+            </span>
+          </span>
+          <span key={verdict(score || 1).label} className="mt-1 h-5 text-sm font-semibold text-muted-foreground animate-[rise-in_180ms_var(--ease-out)] motion-reduce:animate-none">
+            {score ? verdict(score).label : "Pick a score"}
+          </span>
         </div>
+
         <input
           id="score"
           type="range"
           name={score ? "score" : undefined}
-          min={1}
+          min={0.5}
           max={10}
           step={0.5}
-          value={score || 1}
+          value={score || 0.5}
           aria-valuetext={score ? `${formatScore(score)} out of 10, ${verdict(score).label}` : "Not scored yet"}
           onChange={(e) => pick(Number(e.target.value))}
           tabIndex={0}
           className="pointer-events-none absolute inset-0 size-full appearance-none opacity-0"
         />
-        {/* Pointer layer over the bars (the slider underneath keeps keyboard and screen-reader use). */}
-        <div
-          aria-hidden
-          onPointerDown={onDown}
-          onPointerMove={onMove}
-          onPointerUp={(e) => {
-            if (dragging) pick(valueAt(e));
-            setDragging(false);
-          }}
-          onPointerCancel={onEnd}
-          onPointerLeave={onEnd}
-          className={cn("absolute inset-0 touch-pan-y", locked ? "cursor-default" : "cursor-pointer")}
-        />
       </div>
-      <div aria-hidden className="mt-1.5 flex gap-1 text-center text-xs text-faint tabular-nums">
-        {STEPS.map((v) => (
-          <span key={v} className={cn("flex-1", Math.floor(shown) === v && "font-semibold text-foreground")}>
-            {Number.isInteger(v) ? v : ""}
-          </span>
-        ))}
+
+      <div className="mt-4 flex items-center justify-between gap-3">
+        <StepButton label="Lower the score by half a point" onClick={() => step(-0.5)} disabled={score <= 0.5}>
+          <MinusIcon aria-hidden className="size-5" />
+        </StepButton>
+        <p aria-hidden className="text-center text-sm text-muted-foreground">
+          Tap a slice or drag around the plate
+        </p>
+        <StepButton label="Raise the score by half a point" onClick={() => step(0.5)} disabled={score >= 10}>
+          <PlusIcon aria-hidden className="size-5" />
+        </StepButton>
       </div>
     </div>
+  );
+}
+
+function StepButton({ label, onClick, disabled, children }: { label: string; onClick: () => void; disabled: boolean; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      onClick={onClick}
+      disabled={disabled}
+      className="grid size-11 shrink-0 place-items-center rounded-full border border-hairline bg-raised text-foreground transition-[transform,opacity] duration-150 ease-[var(--ease-out)] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:scale-90 disabled:opacity-40 disabled:active:scale-100"
+    >
+      {children}
+    </button>
   );
 }

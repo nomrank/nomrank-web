@@ -9,6 +9,7 @@ import { FieldError } from "@/components/ui/field";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "@/components/toaster";
 import { addRestaurant, setBan, type AdminResult } from "./actions";
+import { CITIES } from "@/lib/cities";
 
 const ICONS = { approve: CheckIcon, remove: Trash2Icon, dismiss: XIcon } as const;
 
@@ -122,6 +123,20 @@ export function AddRestaurantForm() {
     <form key={state.ok ?? 0} action={action} className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start">
       <Input name="name" required maxLength={80} placeholder="Restaurant name" aria-label="Restaurant name" className="h-11 bg-raised sm:flex-1" />
       <Input name="area" required maxLength={60} placeholder="Area, e.g. Jayanagar" aria-label="Area" className="h-11 bg-raised sm:w-56" />
+      <select
+        name="city"
+        required
+        defaultValue=""
+        aria-label="City"
+        className="h-11 rounded-md border border-input bg-raised px-3 text-base focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:w-40"
+      >
+        <option value="" disabled>
+          City
+        </option>
+        {CITIES.map((c) => (
+          <option key={c}>{c}</option>
+        ))}
+      </select>
       <Button type="submit" size="xl" disabled={pending} className={cn("sm:min-h-11")}>
         {pending ? <Spinner data-icon="inline-start" /> : <PlusIcon data-icon="inline-start" />}
         Add restaurant

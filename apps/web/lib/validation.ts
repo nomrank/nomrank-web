@@ -33,12 +33,12 @@ export const dishNameSchema = z
       .refine((s) => dishKey(s) !== "", "Use letters, not just symbols."),
   );
 
-// Mirrors public.ratings checks: score 1–10 in half steps, optional take (trimmed, ≤500).
+// Mirrors public.ratings checks: score 0.5–10 in half steps, optional take (trimmed, ≤500).
 export const ratingSchema = z.object({
   score: z.coerce
     .number()
-    .min(1, "Pick a score from 1 to 10.")
-    .max(10, "Pick a score from 1 to 10.")
+    .min(0.5, "Pick a score from 0.5 to 10.")
+    .max(10, "Pick a score from 0.5 to 10.")
     .refine((n) => Number.isInteger(n * 2), "Scores go in half steps, like 8.5."),
   take: z
     .string()

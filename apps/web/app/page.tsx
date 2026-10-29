@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { getViewer } from "@/lib/auth";
+import { getCity } from "@/lib/city";
 import { isAdmin } from "@/lib/admin";
 import { unreadCount } from "@/lib/notifications";
 import { getRestaurants } from "@/lib/restaurants";
@@ -28,19 +29,19 @@ export default function HomePage({ searchParams }: PageProps<"/">) {
 async function Home({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
   const { sort: asked, account, tab } = await searchParams;
   const { supabase, userId, profile } = await getViewer();
-  const prefs = await getPreferences(supabase, userId);
+  const [prefs, city] = await Promise.all([getPreferences(supabase, userId), getCity()]);
   // No ?sort → your default feed. "Following" needs a signed-in viewer; signed out it falls back to Top.
   const wanted = asked ?? prefs.feed_default;
   const sort: FeedSort = wanted === "new" ? "new" : wanted === "following" && userId ? "following" : "top";
   const authors = sort === "following" && userId ? await getFollowees(supabase, userId) : [];
   const [allRestaurants, feed, lists, listed, rankings] = await Promise.all([
     getRestaurants(supabase),
-    getFeed(supabase, sort, authors, { show: prefs.show_diet }),
+    getFeed(supabase, sort, authors, { show: prefs.show_diet, city }),
     getLists(supabase),
     getListedDishes(supabase),
     getRankings(supabase),
   ]);
-  const restaurants = filterMenus(allRestaurants, prefs.show_diet);
+  const restaurants = filterMenus(city ? allRestaurants.filter((r) => r.city === city) : allRestaurants, prefs.show_diet);
   const reviews = feed;
   const [votes, admin, unread] = await Promise.all([
     profile ? getMyVotes(supabase, reviews.map((r) => r.id)) : {},
@@ -53,7 +54,8 @@ async function Home({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
       profile={profile}
       restaurants={restaurants}
       feed={{ sort, reviews, votes }}
-      leaders={listLeaders(lists, listed, rankings, prefs.show_diet)}
+      leaders={listLeaders(lists, city ? listed.filter((d) => d.restaurant.city === city) : listed, rankings, prefs.show_diet)}
+      city={city}
       admin={admin}
       unread={unread}
       initialView={tab === "rankings" ? "rankings" : "takes"}

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { listHref, listLeaders, rankList, type FoodList, type Ranking } from "./rankings";
 import type { DishDetail } from "./restaurants";
 
-const place = { slug: "vb", name: "Vidyarthi Bhavan", area: "Basavanagudi" };
+const place = { slug: "vb", name: "Vidyarthi Bhavan", area: "Basavanagudi", city: "Bengaluru" };
 const dish = (id: string, name: string, diet: DishDetail["diet"] = "veg"): DishDetail => ({ id, name, diet, rating_count: 0, avg_score: null, restaurant: place });
 const ranking = (dish_id: string, rank: number | null, ratings = 1): Ranking => ({ dish_id, space_id: "dosa", rank, ratings, home_avg: null, home_count: 0 });
 

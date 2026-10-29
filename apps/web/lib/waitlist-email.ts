@@ -79,7 +79,7 @@ export function waitlistEmail(siteUrl: string) {
           <td class="pad" style="padding:0 8px 24px 8px;">
             <table role="presentation" cellpadding="0" cellspacing="0"><tr>
               <td valign="middle" style="padding-right:12px;"><img src="${site}/apple-icon" width="40" height="40" alt="" style="display:block;width:40px;height:40px;border:0;border-radius:10px;"></td>
-              <td valign="middle" style="font-family:${WORDMARK};font-size:26px;line-height:30px;font-weight:800;letter-spacing:-0.9px;color:${SPOTLIGHT};">nomrank<span style="color:${KETCHUP};">.</span></td>
+              <td valign="middle" style="font-family:${WORDMARK};font-size:26px;line-height:30px;font-weight:800;letter-spacing:-0.9px;color:${SPOTLIGHT};">nomrank</td>
             </tr></table>
           </td>
         </tr>
@@ -138,7 +138,7 @@ export function waitlistEmail(siteUrl: string) {
         <tr>
           <td class="pad" style="padding:48px 8px 0 8px;">
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="border-top:1px solid ${HAIRLINE};font-size:1px;line-height:1px;">&nbsp;</td></tr></table>
-            <p style="margin:24px 0 0 0;font-family:${WORDMARK};font-size:16px;line-height:20px;font-weight:800;letter-spacing:-0.5px;color:${SPOTLIGHT};">nomrank<span style="color:${KETCHUP};">.</span> <span style="font-family:${BODY};font-size:14px;font-weight:400;letter-spacing:0;color:${MUTED};">Rate the dish, not the place.</span></p>
+            <p style="margin:24px 0 0 0;font-family:${WORDMARK};font-size:16px;line-height:20px;font-weight:800;letter-spacing:-0.5px;color:${SPOTLIGHT};">nomrank <span style="font-family:${BODY};font-size:14px;font-weight:400;letter-spacing:0;color:${MUTED};">Rate the dish, not the place.</span></p>
             <p style="margin:12px 0 0 0;font-family:${BODY};font-size:12px;line-height:19px;color:${FAINT};">
               You're getting this because this address joined the Nomrank waitlist at ${host}. Not you? Ignore this email and you won't hear from us again.
             </p>

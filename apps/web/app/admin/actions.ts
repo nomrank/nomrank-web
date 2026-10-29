@@ -6,6 +6,7 @@ import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 import { isAdmin } from "@/lib/admin";
 import { restaurantSchema, restaurantSlug } from "@/lib/validation";
+import { asCity } from "@/lib/cities";
 
 // Every admin action runs as the signed-in admin; the database functions check is_admin() again and log it.
 // These only validate input, call the function, and clean up photo files the database can't delete.
@@ -69,6 +70,8 @@ export async function setBan(account: string, banned: boolean, reason = "", purg
 export async function addRestaurant(_: AdminResult, formData: FormData): Promise<AdminResult> {
   const parsed = restaurantSchema.safeParse({ name: formData.get("name"), area: formData.get("area") });
   if (!parsed.success) return failed(parsed.error.issues[0].message);
+  const city = asCity(formData.get("city"));
+  if (!city) return failed("Pick the city.");
   const supabase = await admin();
   const escape = (s: string) => s.replace(/[%_\\]/g, "\\$&");
   const { data: same } = await supabase
@@ -76,12 +79,13 @@ export async function addRestaurant(_: AdminResult, formData: FormData): Promise
     .select("slug")
     .ilike("name", escape(parsed.data.name))
     .ilike("area", escape(parsed.data.area))
+    .eq("city", city)
     .limit(1);
   if (same?.length) return failed(`That place is already listed (/r/${same[0].slug}).`);
   const base = restaurantSlug(parsed.data.name);
   const candidates = [base, `${base}-${restaurantSlug(parsed.data.area)}`, ...[2, 3, 4, 5].map((n) => `${base}-${n}`)];
   for (const slug of candidates) {
-    const { error } = await supabase.rpc("admin_add_restaurant", { slug, name: parsed.data.name, area: parsed.data.area });
+    const { error } = await supabase.rpc("admin_add_restaurant", { slug, name: parsed.data.name, area: parsed.data.area, city });
     if (!error) {
       refresh();
       return { ok: Date.now() };

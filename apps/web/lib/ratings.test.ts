@@ -9,6 +9,10 @@ describe("summarize", () => {
     expect(s.spread).toEqual([1, 0, 0, 0, 0, 0, 0, 2, 1, 1]);
   });
 
+  it("counts a 0.5 in the first bar", () => {
+    expect(summarize([0.5, 1, 1.5]).spread).toEqual([3, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+  });
+
   it("handles no ratings", () => {
     expect(summarize([])).toEqual({ count: 0, average: null, spread: Array(10).fill(0) });
   });

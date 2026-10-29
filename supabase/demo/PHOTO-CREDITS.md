@@ -15,3 +15,5 @@ Free photos from Unsplash (Unsplash License), resized to 1200px. Demo data only;
 | donne-biryani.jpg | https://unsplash.com/photos/1631515243349-e0cb75fb8d3a |
 | filter-coffee.jpg | https://unsplash.com/photos/1758387941825-a6ecaec9c14d |
 | cheeseburger.jpg | https://unsplash.com/photos/1572802419224-296b0aeee0d9 |
+
+`paradise-dum-biryani.jpg` and `cafe-madras-filter-coffee.jpg` are copies of `biryani-2.jpg` and `filter-coffee.jpg` (same credits), used by `cities.sql` because each stored photo path can belong to one take only.

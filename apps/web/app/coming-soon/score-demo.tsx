@@ -33,7 +33,7 @@ export function ScoreDemo() {
       <div className="px-5 pt-5 pb-6 sm:px-7 sm:pb-7">
         <div className="pr-24">
           <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[1.375rem] leading-tight font-semibold tracking-[-0.02em]">
-            Chicken dum biryani <Verdict score={score} icon />
+            Chicken dum biryani <Verdict score={score} />
           </p>
           <p className="mt-1 text-[0.9375rem] text-muted-foreground">from Ammi&apos;s Biryani House</p>
         </div>

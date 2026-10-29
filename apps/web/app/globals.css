@@ -10,7 +10,6 @@
   --font-sans: var(--font-geist);
   --font-heading: var(--font-geist);
   --font-wordmark: var(--font-jakarta);
-  --font-mark: var(--font-suez);
   --color-raised: var(--raised);
   --color-hairline: var(--hairline);
   --color-faint: var(--faint);
@@ -207,11 +206,6 @@
 @keyframes bar-grow {
   from { transform: scaleY(0); }
 }
-/* The "on air" light next to New. */
-@keyframes on-air {
-  50% { opacity: 0.3; }
-}
-
 /* Page content rises in as it arrives (React <ViewTransition enter="rise">). */
 ::view-transition-new(.rise) {
   animation: 260ms var(--ease-out) both rise-in;
@@ -350,4 +344,17 @@
   0% { transform: scale(0.82); }
   60% { transform: scale(1.06); }
   100% { transform: none; }
+}
+
+/* The loader's sparkle: it swells, turns a quarter and settles, like a glint on a steel plate. */
+@keyframes twinkle {
+  0%, 100% { transform: scale(0.7) rotate(0deg); opacity: 0.75; }
+  50% { transform: scale(1.12) rotate(45deg); opacity: 1; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .sparkle-twinkle {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: twinkle 1.3s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  }
 }

@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 import { formatScore, scoreHeat } from "./ratings";
-import { badgeUri } from "./logo";
+import { markUri } from "./logo";
 
 // Link previews (WhatsApp, Instagram, X…): one 1200×630 card in the Nomrank look. Rendered by next/og, which
 // understands a small subset of CSS: flex layout and plain colours only (no CSS variables).
@@ -31,8 +31,7 @@ type Card = {
   photo?: string | null;
 };
 
-// Fonts for the card (the built-in font is regular only): Geist for text, Plus Jakarta Sans for the wordmark and
-// Suez One for the mark's "n", as in the app. Fetched once per server process as TTF (Google Fonts serves TTF to clients that don't ask for
+// Fonts for the card (the built-in font is regular only): Geist for text and Plus Jakarta Sans for the wordmark, as in the app. Fetched once per server process as TTF (Google Fonts serves TTF to clients that don't ask for
 // woff2). If the fetch fails, the card still renders in the built-in font.
 type Font = { name: string; data: ArrayBuffer; weight: 400 | 500 | 800; style: "normal" };
 let fonts: Promise<Font[]> | null = null;
@@ -49,22 +48,16 @@ async function googleFont(family: string, weight: Font["weight"]): Promise<Font 
 }
 
 export function loadFonts() {
-  fonts ??= Promise.all([googleFont("Geist", 500), googleFont("Geist", 800), googleFont("Plus Jakarta Sans", 800), googleFont("Suez One", 400)]).then((list) =>
+  fonts ??= Promise.all([googleFont("Geist", 500), googleFont("Geist", 800), googleFont("Plus Jakarta Sans", 800)]).then((list) =>
     list.filter((f): f is Font => f !== null),
   );
   return fonts;
 }
 
-// The mark for generated images (icons, cards): the badge as a picture with the "n" set over it. next/og has no CSS
-// masks, which is how the app draws it.
+// The mark for generated images (icons, cards), as a picture of the same SVG the app draws.
 export function Mark({ size }: { size: number }) {
-  return (
-    <div style={{ width: size, height: size, display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
-      {/* eslint-disable-next-line @next/next/no-img-element -- next/og renders plain img */}
-      <img src={badgeUri(MUSTARD, STUDIO)} alt="" width={size} height={size} style={{ position: "absolute", top: 0, left: 0 }} />
-      <div style={{ display: "flex", fontFamily: "Suez One", fontSize: size * 0.56, lineHeight: 1, color: STUDIO, marginTop: -size * 0.06 }}>n</div>
-    </div>
-  );
+  // eslint-disable-next-line @next/next/no-img-element -- next/og renders plain img
+  return <img src={markUri(SPOTLIGHT, MUSTARD)} alt="" width={size} height={size} />;
 }
 
 export async function ogCard({ eyebrow, title, subtitle, body, score, scoreNote, photo }: Card) {
@@ -87,8 +80,7 @@ export async function ogCard({ eyebrow, title, subtitle, body, score, scoreNote,
           </div>
           <div style={{ display: "flex", alignItems: "center", fontFamily: "Plus Jakarta Sans", fontWeight: 800, fontSize: 40, letterSpacing: -1.4 }}>
             <Mark size={52} />
-            <span style={{ marginLeft: 14 }}>nomrank</span>
-            <span style={{ color: KETCHUP }}>.</span>
+            <span style={{ marginLeft: 12 }}>nomrank</span>
             <span style={{ marginLeft: 18, fontFamily: "Geist", fontSize: 24, fontWeight: 500, color: MUTED, letterSpacing: 0 }}>Rate the dish, not the place.</span>
           </div>
         </div>

@@ -1,8 +1,8 @@
 # Nomrank
 
-A Bangalore food app where people rate **individual dishes** (not restaurants), argue about them, and find what's worth eating. Signature feature: **Tastes like home**, which shows how people from a dish's home region rate it (e.g. Hyderabadis on biryani).
+An Indian food app where people rate **individual dishes** (not restaurants), argue about them, and find what's worth eating. Signature feature: **Tastes like home**, which shows how people from a dish's home region rate it (e.g. Hyderabadis on biryani).
 
-Launch: Bangalore, web app first (mobile-first PWA). Android/iOS apps come later via Expo, reusing shared code.
+Launch: Bengaluru, Mumbai, Delhi and Hyderabad (cities in `apps/web/lib/cities.ts`), web app first (mobile-first PWA). Android/iOS apps come later via Expo, reusing shared code.
 
 ## Stack
 - **Web:** Next.js (App Router) + TypeScript + Tailwind + shadcn/ui
@@ -13,7 +13,7 @@ Launch: Bangalore, web app first (mobile-first PWA). Android/iOS apps come later
 
 ## v1 scope (build in this order)
 1. Auth (email first; Google + phone OTP later) and onboarding: username + **home region**
-2. Restaurants (seed list of popular Bangalore spots + user-added, with duplicate handling) and dishes (optional `origin_region`)
+2. Restaurants (seed list of popular spots in the launch cities + user-added, with duplicate handling) and dishes (optional `origin_region`)
 3. Spaces: one leaderboard per food (Biryani, Dosa, ...), anyone can create one
 4. Reviews: rating 1–10, short hot take, photos. One review per user per dish.
 5. Feed with **Agree** / **Disagree** votes on takes (stored internally as `facts` / `cap`)

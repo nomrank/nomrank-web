@@ -24,7 +24,7 @@ type Point = { icon: React.ElementType; title: string; text: React.ReactNode };
 
 const BASICS: Point[] = [
   { icon: UtensilsIcon, title: "Rate the dish, not the place", text: "Every score is for one dish at one place. The same restaurant can make a great dosa and a forgettable vada." },
-  { icon: StarIcon, title: "Scores from 1 to 10", text: "In half steps. The overall rating on a dish is the plain average of everyone's scores." },
+  { icon: StarIcon, title: "Scores from 0.5 to 10", text: "In half steps. The overall rating on a dish is the plain average of everyone's scores." },
   { icon: MessageCircleIcon, title: "Takes, votes and comments", text: "Add a short take with your score. Others can Agree or Disagree and reply. You can't vote on your own." },
   { icon: HouseHeartIcon, title: "Tastes like home", text: "How people from a food's home region rate it, e.g. 8.7 from 12 Kannadigas on a masala dosa. It shows once 3 of them have rated a dish." },
 ];

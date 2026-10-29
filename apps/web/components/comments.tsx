@@ -197,17 +197,19 @@ type ComposerProps = { ratingId: string; parentId?: string; placeholder: string;
 function Composer({ ratingId, parentId, placeholder, autoFocus, className, onDone }: ComposerProps) {
   const [state, action, pending] = useActionState<CommentState, FormData>(async (prev, data) => {
     const next = await addComment(prev, data);
-    if (next.ok !== prev.ok) toast(parentId ? "Reply posted" : "Comment posted");
+    if (next.ok !== prev.ok) {
+      toast(parentId ? "Reply posted" : "Comment posted");
+      onDone?.(); // closes a reply form; the parent's state can't be set while this component renders, so it's done here
+    }
     return next;
   }, {});
   const [body, setBody] = useState("");
   const [seenOk, setSeenOk] = useState(state.ok);
 
-  // A successful post comes back with a new `ok`: clear the box (and close a reply form).
+  // A successful post comes back with a new `ok`: clear the box.
   if (state.ok !== seenOk) {
     setSeenOk(state.ok);
     setBody("");
-    onDone?.();
   }
 
   return (

@@ -1,34 +1,25 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { badgeUri } from "@/lib/logo";
+import { ARCH, MARK_VIEWBOX, SPARKLE } from "@/lib/logo";
 
-const MASK = `url("${badgeUri("#000")}")`;
-
-// The mark: the Must try badge in mustard, upright, with a Suez One "n".
-export function LogoMark({ size = 28, className }: { size?: number; className?: string }) {
+// The mark: the arch with the spoon cut out, in the current text colour, and the mustard sparkle.
+// `twinkle` makes the sparkle pulse (the loader); everything else holds still.
+export function LogoMark({ size = 28, className, twinkle }: { size?: number; className?: string; twinkle?: boolean }) {
   return (
-    <span aria-hidden className={cn("relative inline-grid shrink-0 place-items-center text-studio", className)} style={{ width: size, height: size }}>
-      <span className="absolute inset-0 bg-mustard" style={{ maskImage: MASK, WebkitMaskImage: MASK, maskSize: "100% 100%", WebkitMaskSize: "100% 100%" }} />
-      {/* The dashed ring: thinner on small marks so the dashes stay crisp, and left off the tiniest (the verdict chip). */}
-      {size >= 24 && <span className={cn("absolute inset-[19%] rounded-full border-dashed border-studio/40", size >= 40 ? "border-[1.5px]" : "border")} />}
-      {/* Suez One sits low in its line box; lift it to the badge's centre. Smaller on tiny marks (the verdict chip),
-          where a full-size n reads as a capital. */}
-      <span className="relative font-mark leading-none font-normal normal-case" style={{ fontSize: size * (size >= 24 ? 0.56 : 0.46), transform: `translateY(${-size * 0.04}px)` }}>
-        n
-      </span>
-    </span>
+    <svg aria-hidden viewBox={MARK_VIEWBOX} width={size} height={size} className={cn("shrink-0 overflow-visible", className)}>
+      <path d={ARCH} fill="currentColor" fillRule="evenodd" />
+      <path d={SPARKLE} className={cn("fill-mustard", twinkle && "sparkle-twinkle")} />
+    </svg>
   );
 }
 
-// The lockup: the mark and "nomrank." in Plus Jakarta Sans ExtraBold.
+// The lockup: the mark and "nomrank" in Plus Jakarta Sans ExtraBold, as in the owner's logo.
 export function Wordmark({ className, href = "/" }: { className?: string; href?: string | null }) {
   const mark = (
-    <span className={cn("inline-flex items-center gap-2 text-[1.375rem] leading-none", className)}>
-      {/* Centred on the lowercase letters, not the line box (which leaves room for capitals "nomrank" doesn't have). */}
-      <LogoMark size={28} className="translate-y-[0.135em]" />
-      <span className="font-wordmark font-extrabold tracking-[-0.035em]">
-        nomrank<span className="text-ketchup">.</span>
-      </span>
+    <span className={cn("inline-flex items-end gap-1.5 text-[1.375rem] leading-none", className)}>
+      {/* The arch sits on the baseline of the letters, the sparkle above it. */}
+      <LogoMark size={32} className="translate-y-[0.06em]" />
+      <span className="font-wordmark font-extrabold tracking-[-0.035em]">nomrank</span>
     </span>
   );
   return href ? (
