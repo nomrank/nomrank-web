@@ -3,7 +3,7 @@
 
 const FROM = "Nomrank <hello@nomrank.in>";
 
-// `from` overrides the sender, e.g. the admin site sends as admin@nomrank.in (any address on the verified domain works).
+// `from` overrides the sender, e.g. the admin site sends as admin-alerts@nomrank.in (any address on the verified domain works).
 type Email = { to: string; subject: string; html: string; text: string; from?: string };
 
 // Sends one email. Without RESEND_API_KEY (e.g. local development) it does nothing and says so.

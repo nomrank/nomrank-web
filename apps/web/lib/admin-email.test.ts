@@ -14,8 +14,8 @@ describe("adminInviteEmail", () => {
 });
 
 describe("sender", () => {
-  it("admin emails come from admin@nomrank.in", () => {
-    expect(ADMIN_FROM).toContain("<admin@nomrank.in>");
+  it("admin emails come from admin-alerts@nomrank.in", () => {
+    expect(ADMIN_FROM).toContain("<admin-alerts@nomrank.in>");
   });
 });
 
