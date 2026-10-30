@@ -358,3 +358,33 @@
     animation: twinkle 1.3s cubic-bezier(0.45, 0, 0.55, 1) infinite;
   }
 }
+
+/* A quiet nudge on "Tap the one you'd order": it breathes until you pick. */
+@keyframes bask {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+
+/* Battles: each corner flies in from its own side, and the rays turn slowly behind the fight on screen. */
+@keyframes battle-in-l {
+  from {
+    opacity: 0;
+    transform: translateX(-2.5rem) scale(0.94);
+  }
+}
+@keyframes battle-in-r {
+  from {
+    opacity: 0;
+    transform: translateX(2.5rem) scale(0.94);
+  }
+}
+@keyframes rays {
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+.battle-rays {
+  background: repeating-conic-gradient(from 0deg, rgb(255 194 60 / 0.07) 0deg 7deg, transparent 7deg 18deg);
+  mask-image: radial-gradient(closest-side, #000 18%, transparent 62%);
+  animation: rays 70s linear infinite;
+}

@@ -87,3 +87,14 @@ export async function sendReset(_: LoginState, formData: FormData): Promise<Logi
   // Same answer whether or not the address has an account.
   return { status: "sent", email: email.data, kind: "reset" };
 }
+
+// Sign in or sign up with Google (one flow: a new Google account goes on to onboarding). Supabase holds the
+// Google client; the code it sends back to /auth/callback is swapped for a session there.
+export async function signInWithGoogle() {
+  const h = await headers();
+  const origin = h.get("origin") ?? `http://${h.get("host")}`;
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: `${origin}/auth/callback` } });
+  if (error || !data.url) redirect("/login?error=google");
+  redirect(data.url);
+}

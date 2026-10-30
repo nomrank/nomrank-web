@@ -13,12 +13,13 @@ import { Spinner } from "@/components/ui/spinner";
 import { Disclaimer } from "@/components/disclaimer";
 import { ScoreMeter } from "@/components/score-meter";
 import { saveRating, type SaveRatingState } from "@/app/rating-actions";
+import { PostedPanel } from "./posted-panel";
 
 type Existing = { score: number; take: string | null; photos: string[] } | null;
 type Photo = { key: string; path?: string; file?: File; preview: string };
 const MAX_TAKE = 500;
 
-export function RateForm({ dish, userId, existing }: { dish: DishDetail; userId: string; existing: Existing }) {
+export function RateForm({ dish, userId, existing, intro }: { dish: DishDetail; userId: string; existing: Existing; intro?: React.ReactNode }) {
   const [state, action, pending] = useActionState<SaveRatingState, FormData>(saveRating, {});
   const [score, setScore] = useState(existing?.score ?? 0);
   const [take, setTake] = useState(existing?.take ?? "");
@@ -66,76 +67,80 @@ export function RateForm({ dish, userId, existing }: { dish: DishDetail; userId:
   }
 
   const error = localError ?? state.error;
+  if (state.posted) return <PostedPanel posted={state.posted} rateAnother="/rate" />;
   return (
-    <form onSubmit={submit} className="flex flex-col gap-7 pb-6">
-      <input type="hidden" name="dish_id" value={dish.id} />
+    <>
+    {intro}
+      <form onSubmit={submit} className="flex flex-col gap-7 pb-6">
+        <input type="hidden" name="dish_id" value={dish.id} />
 
-      <ScoreMeter score={score} onChange={setScore} />
+        <ScoreMeter score={score} onChange={setScore} />
 
-      <Field>
-        <FieldLabel htmlFor="take" className="font-semibold">
-          Hot take <span className="font-medium text-muted-foreground">(optional)</span>
-        </FieldLabel>
-        <AutoTextarea
-          id="take"
-          name="take"
-          value={take}
-          onChange={(e) => setTake(e.target.value.slice(0, MAX_TAKE))}
-          rows={4}
-          placeholder="What did you think?"
-          aria-describedby="take-count"
-          className="w-full rounded-md border border-input bg-raised px-3.5 py-3 text-base leading-relaxed focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-        />
-        <p id="take-count" className="text-right text-sm text-muted-foreground tabular-nums">
-          {take.length}/{MAX_TAKE}
-        </p>
-      </Field>
+        <Field>
+          <FieldLabel htmlFor="take" className="font-semibold">
+            Hot take <span className="font-medium text-muted-foreground">(optional)</span>
+          </FieldLabel>
+          <AutoTextarea
+            id="take"
+            name="take"
+            value={take}
+            onChange={(e) => setTake(e.target.value.slice(0, MAX_TAKE))}
+            rows={4}
+            placeholder="What did you think?"
+            aria-describedby="take-count"
+            className="w-full rounded-md border border-input bg-raised px-3.5 py-3 text-base leading-relaxed focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          />
+          <p id="take-count" className="text-right text-sm text-muted-foreground tabular-nums">
+            {take.length}/{MAX_TAKE}
+          </p>
+        </Field>
 
-      <div>
-        <p className="mb-3 text-sm font-semibold">
-          Photos <span className="font-medium text-muted-foreground">(up to 4)</span>
-        </p>
-        <div className="flex flex-wrap gap-3">
-          {photos.map((p, i) => (
-            <span key={p.key} className="relative size-20 overflow-hidden rounded-md">
-              {/* eslint-disable-next-line @next/next/no-img-element -- local previews and Storage URLs */}
-              <img src={p.preview} alt={`Photo ${i + 1}`} className="size-full object-cover" />
+        <div>
+          <p className="mb-3 text-sm font-semibold">
+            Photos <span className="font-medium text-muted-foreground">(up to 4)</span>
+          </p>
+          <div className="flex flex-wrap gap-3">
+            {photos.map((p, i) => (
+              <span key={p.key} className="relative size-20 overflow-hidden rounded-md">
+                {/* eslint-disable-next-line @next/next/no-img-element -- local previews and Storage URLs */}
+                <img src={p.preview} alt={`Photo ${i + 1}`} className="size-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPhotos((all) => all.filter((x) => x.key !== p.key));
+                    setPhotosChanged(true);
+                  }}
+                  aria-label={`Remove photo ${i + 1}`}
+                  className="absolute top-1 right-1 grid size-7 place-items-center rounded-full bg-studio/85 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                >
+                  <XIcon className="size-4" />
+                </button>
+              </span>
+            ))}
+            {photos.length < 4 && (
               <button
                 type="button"
-                onClick={() => {
-                  setPhotos((all) => all.filter((x) => x.key !== p.key));
-                  setPhotosChanged(true);
-                }}
-                aria-label={`Remove photo ${i + 1}`}
-                className="absolute top-1 right-1 grid size-7 place-items-center rounded-full bg-studio/85 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                onClick={() => fileRef.current?.click()}
+                className="grid size-20 place-items-center rounded-md border border-dashed border-input text-muted-foreground hover:border-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
               >
-                <XIcon className="size-4" />
+                <ImagePlusIcon className="size-6" />
+                <span className="sr-only">Add photos</span>
               </button>
-            </span>
-          ))}
-          {photos.length < 4 && (
-            <button
-              type="button"
-              onClick={() => fileRef.current?.click()}
-              className="grid size-20 place-items-center rounded-md border border-dashed border-input text-muted-foreground hover:border-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-            >
-              <ImagePlusIcon className="size-6" />
-              <span className="sr-only">Add photos</span>
-            </button>
-          )}
+            )}
+          </div>
+          <input ref={fileRef} type="file" accept="image/*" multiple hidden onChange={(e) => addFiles(e.target.files)} />
         </div>
-        <input ref={fileRef} type="file" accept="image/*" multiple hidden onChange={(e) => addFiles(e.target.files)} />
-      </div>
 
-      {error && <FieldError className="text-base">{error}</FieldError>}
+        {error && <FieldError className="text-base">{error}</FieldError>}
 
-      <Button type="submit" size="xl" className="w-full" disabled={busy}>
-        {busy && <Spinner data-icon="inline-start" />}
-        {uploading ? "Uploading photos" : pending ? "Posting" : take.trim() ? "Post it" : "Save score"}
-      </Button>
-      <Disclaimer className="justify-center text-center">
-        Your score, take and photos are public. Rate what you actually ate, and keep it about the food.
-      </Disclaimer>
-    </form>
+        <Button type="submit" size="xl" className="w-full" disabled={busy}>
+          {busy && <Spinner data-icon="inline-start" />}
+          {uploading ? "Uploading photos" : pending ? "Posting" : take.trim() ? "Post it" : "Save score"}
+        </Button>
+        <Disclaimer className="justify-center text-center">
+          Your score, take and photos are public. Rate what you actually ate, and keep it about the food.
+        </Disclaimer>
+      </form>
+    </>
   );
 }

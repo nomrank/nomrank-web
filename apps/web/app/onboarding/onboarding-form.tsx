@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
-import { ArrowLeftIcon, ArrowRightIcon, CakeIcon, CheckIcon, LockIcon } from "lucide-react";
+import { ArrowLeftIcon, ArrowRightIcon, CakeIcon, LockIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel, FieldLegend, FieldSet } from "@/components/ui/field";
@@ -12,16 +12,17 @@ import { DateOfBirthField } from "@/components/date-of-birth";
 import { DIETS, GENDERS } from "@/lib/profiles";
 import { isAtLeast13, usernameSchema } from "@/lib/validation";
 import { cn } from "@/lib/utils";
+import { RegionPicker, type PickableRegion } from "@/components/region-picker";
 import { CHIP, chipState } from "@/app/settings/profile/profile-form";
 import { createProfile, type OnboardingState } from "./actions";
 
-export type Region = { slug: string; name: string };
+export type Region = PickableRegion;
 
-type Step = 1 | 2 | 3;
+type Step = 1 | 2 | 3 | 4;
 
-// Three steps: who you are (handle, name), about you (birthday, gender, food preference), where home is.
+// Four steps: who you are (handle, name), about you (birthday, gender, food preference), where home is, what you want to eat first.
 // Every step stays mounted (hidden when not current) so all answers go up in one form.
-export function OnboardingForm({ regions }: { regions: Region[] }) {
+export function OnboardingForm({ regions, foods, name = "" }: { regions: Region[]; foods: string[]; name?: string }) {
   const [state, action, pending] = useActionState<OnboardingState, FormData>(createProfile, {});
   const [step, setStep] = useState<Step>(1);
   const [username, setUsername] = useState("");
@@ -29,9 +30,10 @@ export function OnboardingForm({ regions }: { regions: Region[] }) {
   const [aboutError, setAboutError] = useState<string>();
   const [gender, setGender] = useState("");
   const [diet, setDiet] = useState("");
+  const [picked, setPicked] = useState<string[]>([]);
   const [region, setRegion] = useState(regions.length === 1 ? regions[0].slug : "");
   const [seenState, setSeenState] = useState(state);
-  const headingRefs = useRef<Record<Step, HTMLHeadingElement | null>>({ 1: null, 2: null, 3: null });
+  const headingRefs = useRef<Record<Step, HTMLHeadingElement | null>>({ 1: null, 2: null, 3: null, 4: null });
   const mounted = useRef(false);
 
   // A server error sends you back to the step it's about.
@@ -64,6 +66,8 @@ export function OnboardingForm({ regions }: { regions: Region[] }) {
       if (!isAtLeast13(dob)) return setAboutError("You need to be at least 13 to use Nomrank.");
       setAboutError(undefined);
       setStep(3);
+    } else if (step === 3) {
+      setStep(4);
     }
   }
 
@@ -85,7 +89,7 @@ export function OnboardingForm({ regions }: { regions: Region[] }) {
       <form
         action={action}
         onSubmit={(e) => {
-          if (step < 3) {
+          if (step < 4) {
             e.preventDefault();
             next(e.currentTarget);
           }
@@ -93,7 +97,7 @@ export function OnboardingForm({ regions }: { regions: Region[] }) {
         className="flex flex-1 flex-col"
         noValidate
       >
-        <p className="mb-3 text-xs font-semibold tracking-[0.08em] text-faint uppercase">Step {step} of 3</p>
+        <p className="mb-3 text-xs font-semibold tracking-[0.08em] text-faint uppercase">Step {step} of 4</p>
 
         <div hidden={step !== 1} className={stepClass(1)}>
           <div className="flex flex-col gap-3">
@@ -130,7 +134,7 @@ export function OnboardingForm({ regions }: { regions: Region[] }) {
               <FieldLabel htmlFor="display_name">
                 Your name <span className="font-medium text-muted-foreground">(optional)</span>
               </FieldLabel>
-              <Input id="display_name" name="display_name" maxLength={40} autoComplete="name" placeholder="Asha" className="h-12 bg-raised px-3.5 text-base" />
+              <Input id="display_name" name="display_name" defaultValue={name} maxLength={40} autoComplete="name" placeholder="Asha" className="h-12 bg-raised px-3.5 text-base" />
               <FieldDescription>Shows on your profile above your handle.</FieldDescription>
             </Field>
           </FieldGroup>
@@ -193,24 +197,7 @@ export function OnboardingForm({ regions }: { regions: Region[] }) {
           </div>
           <FieldSet data-invalid={state.error?.field === "region" || undefined}>
             <FieldLegend className="sr-only">Home</FieldLegend>
-            <div className="grid grid-cols-2 gap-2">
-              {regions.map((r) => (
-                <label
-                  key={r.slug}
-                  className={cn(
-                    "flex min-h-12 cursor-pointer items-center justify-between gap-2 rounded-lg border px-3.5 py-2.5 text-[0.9375rem] font-semibold transition-colors duration-200 has-focus-visible:ring-3 has-focus-visible:ring-ring has-focus-visible:ring-offset-2 has-focus-visible:ring-offset-background",
-                    region === r.slug ? "border-mustard bg-raised" : "border-input hover:bg-raised",
-                  )}
-                >
-                  <input type="radio" name="region" value={r.slug} checked={region === r.slug} onChange={() => setRegion(r.slug)} className="sr-only" />
-                  {r.name}
-                  <CheckIcon
-                    aria-hidden
-                    className={cn("size-4 shrink-0 text-primary", region === r.slug ? "animate-[check-pop_420ms_var(--ease-out)_both]" : "opacity-0")}
-                  />
-                </label>
-              ))}
-            </div>
+            <RegionPicker regions={regions} value={region} onChange={setRegion} name="region" />
             {regions.length === 0 ? (
               <FieldError>Couldn&apos;t load places. Refresh the page to try again.</FieldError>
             ) : state.error?.field === "region" ? (
@@ -219,6 +206,28 @@ export function OnboardingForm({ regions }: { regions: Region[] }) {
               <FieldDescription>You can change it later, once every 30 days.</FieldDescription>
             )}
           </FieldSet>
+        </div>
+
+        <div hidden={step !== 4} className={stepClass(4)}>
+          <div className="flex flex-col gap-3">
+            {heading(4, "What are you hungry for?")}
+            <p className="text-muted-foreground">Pick a few. We&apos;ll open the best of the first one right after this.</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {foods.map((f) => (
+              <label key={f} className={cn(CHIP, chipState(picked.includes(f)))}>
+                <input
+                  type="checkbox"
+                  name="food"
+                  value={f}
+                  checked={picked.includes(f)}
+                  onChange={() => setPicked((p) => (p.includes(f) ? p.filter((x) => x !== f) : [...p, f]))}
+                  className="sr-only"
+                />
+                {f}
+              </label>
+            ))}
+          </div>
           {state.error?.field === "form" && (
             <p role="alert" className="text-sm text-destructive">
               {state.error.message}
@@ -235,8 +244,8 @@ export function OnboardingForm({ regions }: { regions: Region[] }) {
             </Button>
           )}
           <Button type="submit" size="xl" className="flex-1" disabled={pending || (step === 3 && (regions.length === 0 || !region))}>
-            {step < 3 ? "Next" : pending ? "Saving" : "Let's eat"}
-            {pending ? <Spinner data-icon="inline-end" /> : step < 3 && <ArrowRightIcon data-icon="inline-end" />}
+            {step < 4 ? "Next" : pending ? "Saving" : picked.length ? "Let's eat" : "Skip, let's eat"}
+            {pending ? <Spinner data-icon="inline-end" /> : step < 4 && <ArrowRightIcon data-icon="inline-end" />}
           </Button>
         </div>
       </form>

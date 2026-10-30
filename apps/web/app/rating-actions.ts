@@ -6,9 +6,12 @@ import { getCurrentUser } from "@/lib/auth";
 import { friendlyError } from "@/lib/db-errors";
 import { dishHref } from "@/lib/dishes";
 import type { Vote } from "@/lib/ratings";
+import { getStanding, type Standing } from "@/lib/rankings";
 import { ratingSchema } from "@/lib/validation";
 
-export type SaveRatingState = { error?: string };
+// What saving told us: where the dish stood before and where it stands now, for the "what changed" panel.
+export type Posted = { score: number; edited: boolean; dish: string; place: string; href: string; before: Standing | null; after: Standing | null; atHome: boolean };
+export type SaveRatingState = { error?: string; posted?: Posted };
 
 // Create or update the viewer's one rating of a dish. Photos, when sent, replace the old set.
 export async function saveRating(_: SaveRatingState, formData: FormData): Promise<SaveRatingState> {
@@ -21,6 +24,7 @@ export async function saveRating(_: SaveRatingState, formData: FormData): Promis
   const photosSent = formData.get("photos_sent") === "1";
   const paths = formData.getAll("photo").map(String).filter((p) => p.startsWith(`${userId}/`)).slice(0, 4);
 
+  const before = await getStanding(supabase, dishId);
   const { data: existing } = await supabase.from("ratings").select("id").eq("dish_id", dishId).eq("user_id", userId).maybeSingle();
   const { data: saved, error } = existing
     ? await supabase.from("ratings").update(parsed.data).eq("id", existing.id).select("id").single()
@@ -42,11 +46,23 @@ export async function saveRating(_: SaveRatingState, formData: FormData): Promis
     }
   }
 
-  // ?done shows the "Rating posted / updated" toast where you land.
-  const done = existing ? "updated" : "rated";
-  if (parsed.data.take) redirect(`/review/${saved.id}?done=${done}`);
-  const { data: dish } = await supabase.from("dishes").select("name, restaurant:restaurants(slug)").eq("id", dishId).single<{ name: string; restaurant: { slug: string } }>();
-  redirect(`${dish ? dishHref(dish.restaurant.slug, dish.name) : "/"}?done=${done}`);
+  // Stay on the page and show what the rating changed (the panel also confirms it, so no redirect and no toast on arrival).
+  const [after, { data: dish }] = await Promise.all([
+    getStanding(supabase, dishId),
+    supabase.from("dishes").select("name, restaurant:restaurants(slug, name)").eq("id", dishId).single<{ name: string; restaurant: { slug: string; name: string } }>(),
+  ]);
+  return {
+    posted: {
+      score: parsed.data.score,
+      edited: Boolean(existing),
+      dish: dish?.name ?? "this dish",
+      place: dish?.restaurant.name ?? "",
+      href: parsed.data.take ? `/review/${saved.id}` : dish ? dishHref(dish.restaurant.slug, dish.name) : "/",
+      before,
+      after,
+      atHome: Boolean(after?.home && profile.regions?.name === after.home.region),
+    },
+  };
 }
 
 // Agree ("facts") / Disagree ("cap") / clear. The database blocks self-votes and keeps the counts.

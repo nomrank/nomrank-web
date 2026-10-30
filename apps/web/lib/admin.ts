@@ -231,3 +231,40 @@ export function appOrigin(host: string | null) {
   if (base.startsWith("localhost")) return `http://${base}`;
   return `https://${process.env.COMING_SOON === "1" ? "beta" : "www"}.${base}`;
 }
+
+export type AdminBattle = { id: string; tag: string; city: string | null; a: string; b: string; votes: { a: number; b: number } };
+
+export async function getAdminBattles(supabase: SupabaseClient): Promise<AdminBattle[]> {
+  const { data, error } = await supabase
+    .from("battles")
+    .select("id, tag, city, a:dishes!battles_dish_a_fkey(name, restaurant:restaurants(name)), b:dishes!battles_dish_b_fkey(name, restaurant:restaurants(name))")
+    .order("created_at", { ascending: false })
+    .returns<{ id: string; tag: string; city: string | null; a: { name: string; restaurant: { name: string } }; b: { name: string; restaurant: { name: string } } }[]>();
+  if (error) throw error;
+  const tally = await supabase.from("battle_tally").select("battle_id, a, b");
+  if (tally.error) throw tally.error;
+  const votes = new Map((tally.data ?? []).map((t) => [t.battle_id as string, { a: Number(t.a), b: Number(t.b) }]));
+  return data.map((b) => ({
+    id: b.id,
+    tag: b.tag,
+    city: b.city,
+    a: `${b.a.name} at ${b.a.restaurant.name}`,
+    b: `${b.b.name} at ${b.b.restaurant.name}`,
+    votes: votes.get(b.id) ?? { a: 0, b: 0 },
+  }));
+}
+
+export type DishOption = { id: string; label: string };
+
+// Every live dish as "Masala Dosa · CTR, Malleshwaram (Bengaluru)", for choosing the two sides of a battle.
+export async function getDishOptions(supabase: SupabaseClient): Promise<DishOption[]> {
+  const { data, error } = await supabase
+    .from("dishes")
+    .select("id, name, restaurant:restaurants(name, area, city)")
+    .not("approved_at", "is", null)
+    .order("name")
+    .limit(2000)
+    .returns<{ id: string; name: string; restaurant: { name: string; area: string; city: string } }[]>();
+  if (error) throw error;
+  return data.map((d) => ({ id: d.id, label: `${d.name} · ${d.restaurant.name}, ${d.restaurant.area} (${d.restaurant.city})` }));
+}

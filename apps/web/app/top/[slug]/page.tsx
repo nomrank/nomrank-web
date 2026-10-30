@@ -70,9 +70,11 @@ async function Ranking({ params }: Pick<PageProps<"/top/[slug]">, "params">) {
             <TrophyIcon aria-hidden className="size-3.5" />
             Rankings
           </p>
-          <h1 className="mt-1 text-[1.75rem] leading-tight font-bold tracking-[-0.02em] wrap-anywhere">
-            Top {list.name}
-            {city && <span className="text-muted-foreground"> in {city}</span>}
+          <h1 className="mt-1.5 text-[1.75rem] leading-tight font-bold tracking-[-0.02em] wrap-anywhere">
+            <span>
+              Top {list.name}
+              {city && <span className="text-muted-foreground"> in {city}</span>}
+            </span>
           </h1>
           <CityPicker city={city} className="my-3" />
           <p className="mt-1 text-sm text-muted-foreground">

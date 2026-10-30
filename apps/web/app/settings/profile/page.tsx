@@ -26,7 +26,7 @@ async function EditProfile() {
   const [me, secret, regions, home] = await Promise.all([
     getProfileByHandle(supabase, profile.username),
     getPrivateDetails(supabase, userId),
-    supabase.from("regions").select("slug, name").order("name").returns<{ slug: string; name: string }[]>(),
+    supabase.from("regions").select("slug, name, kind").order("name").returns<{ slug: string; name: string; kind: "state" | "ut" }[]>(),
     supabase.from("profiles").select("home_region_changed_at").eq("id", userId).single<{ home_region_changed_at: string | null }>(),
   ]);
   if (!me) redirect("/onboarding");

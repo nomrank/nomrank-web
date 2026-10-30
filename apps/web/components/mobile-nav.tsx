@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
-import { BellIcon, HomeIcon, LogInIcon, PlusIcon, TrophyIcon } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { BellIcon, HomeIcon, LogInIcon, PlusIcon, SwordsIcon } from "lucide-react";
 import { Avatar } from "@/components/avatar";
 import { hidesMobileNav } from "@/lib/mobile-nav";
 import { showTab } from "@/lib/home-tab";
@@ -14,15 +14,16 @@ type Viewer = { handle: string; avatar: string | null; photo: string | null };
 // last line of every page clear of it.
 export function MobileNav({ viewer, unread }: { viewer: Viewer | null; unread: number }) {
   const pathname = usePathname();
-  const onRankings = useSearchParams().get("tab") === "rankings";
   if (hidesMobileNav(pathname)) return null;
 
-  const rankings = pathname.startsWith("/top") || (pathname === "/" && onRankings);
-  // Already on Home: switch its tab in place (instant) instead of reloading the page from the server.
-  const stayHome = (e: React.MouseEvent, v: "takes" | "rankings") => {
+  // Home owns the feed and the lists (/top pages are lists), so it stays lit there.
+  const home = pathname === "/" || pathname.startsWith("/top");
+  const battles = pathname.startsWith("/battles");
+  // Already on Home: go back to its first tab in place (instant) instead of reloading the page from the server.
+  const stayHome = (e: React.MouseEvent) => {
     if (pathname !== "/") return;
     e.preventDefault();
-    showTab(v);
+    showTab("takes");
     window.scrollTo({ top: 0 });
   };
   const tab = (active: boolean) =>
@@ -43,15 +44,15 @@ export function MobileNav({ viewer, unread }: { viewer: Viewer | null; unread: n
           viewer ? "grid-cols-5" : "grid-cols-3",
         )}
       >
-        <Link href="/" onClick={(e) => stayHome(e, "takes")} aria-current={pathname === "/" && !onRankings ? "page" : undefined} className={tab(pathname === "/" && !onRankings)}>
-          {dot(pathname === "/" && !onRankings)}
+        <Link href="/" onClick={stayHome} aria-current={pathname === "/" ? "page" : undefined} className={tab(home)}>
+          {dot(home)}
           <HomeIcon aria-hidden className="size-[22px]" />
           Home
         </Link>
-        <Link href="/?tab=rankings" onClick={(e) => stayHome(e, "rankings")} aria-current={rankings ? "page" : undefined} className={tab(rankings)}>
-          {dot(rankings)}
-          <TrophyIcon aria-hidden className="size-[22px]" />
-          Rankings
+        <Link href="/battles" aria-current={battles ? "page" : undefined} className={tab(battles)}>
+          {dot(battles)}
+          <SwordsIcon aria-hidden className="size-[22px]" />
+          Battles
         </Link>
         {viewer ? (
           <>

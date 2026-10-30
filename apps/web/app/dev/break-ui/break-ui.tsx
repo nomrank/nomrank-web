@@ -188,7 +188,7 @@ const REGIONS = [
   ["tamil-nadu", "Tamil Nadu"],
   ["telangana", "Telangana"],
   ["west-bengal", "West Bengal"],
-].map(([slug, name]) => ({ slug, name }));
+].map(([slug, name]) => ({ slug, name, kind: slug === "delhi" ? ("ut" as const) : ("state" as const) }));
 
 // One of each notification kind; the first three are unread.
 // Fixed times (not Date.now()) so the server and browser render the same text.
@@ -216,7 +216,7 @@ export function BreakUi() {
   return (
     <>
       {screen === "login" && <LoginScreen key={key} initialState={f.login} />}
-      {screen === "onboarding" && <OnboardingForm key={key} regions={f.regions} />}
+      {screen === "onboarding" && <OnboardingForm key={key} regions={f.regions} foods={["Biryani", "Dosa", "Masala Dosa With Extra Long Name"]} />}
       {screen === "home" && <HomeView profile={f.profile} restaurants={f.places} feed={{ sort: "top", reviews: REVIEWS[data] ?? [], votes: FIXTURE_VOTES[data] ?? {} }} />}
       {screen === "restaurant" && (f.places[0] ? <RestaurantView restaurant={f.places[0]} /> : <p className="p-6">No place in this fixture.</p>)}
       {screen === "review" && REVIEWS[data]?.[0] && (

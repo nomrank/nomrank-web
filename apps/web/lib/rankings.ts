@@ -101,3 +101,76 @@ export function listLeaders(lists: FoodList[], dishes: Listed[], rankings: Ranki
 }
 
 export type Leader = ReturnType<typeof listLeaders>[number];
+
+// Where a dish stands right now: its overall rating, and its place among the ranked dishes of its list in its own city.
+export type Standing = {
+  avg: number | null;
+  ratings: number;
+  position: number | null; // 1-based place in the city's ranking, null while unranked
+  ranked: number; // how many dishes are ranked there
+  list: string | null;
+  city: string;
+  home: { demonym: string; region: string; count: number; avg: number | null } | null; // Tastes like home, when the dish has a home region
+};
+
+// Place of `dishId` among the ranked dishes given: 1 + how many rank above it (a tie shares a place), null while unranked.
+export function placeIn(list: { id: string; rank: number | null }[], dishId: string) {
+  const ranked = list.filter((d) => d.rank !== null);
+  const mine = ranked.find((d) => d.id === dishId);
+  return { position: mine ? 1 + ranked.filter((d) => d.rank! < mine.rank!).length : null, ranked: ranked.length };
+}
+
+export type Move = { text: string; tone: "up" | "down" | "flat" };
+
+// "Up 2", "Down 1", "Holding", or a first appearance. Positions are 1-based; smaller is better.
+export function rankMove(before: number | null, after: number | null): Move | null {
+  if (after === null) return null;
+  if (before === null) return { text: "New in the ranking", tone: "up" };
+  if (before === after) return { text: "Holding its place", tone: "flat" };
+  return before > after ? { text: `Up ${before - after}`, tone: "up" } : { text: `Down ${after - before}`, tone: "down" };
+}
+
+// How the overall rating moved, to one decimal.
+export function avgMove(before: number | null, after: number | null): Move | null {
+  if (after === null) return null;
+  if (before === null) return { text: "Its first rating", tone: "up" };
+  const d = Math.round((after - before) * 10) / 10;
+  if (d === 0) return { text: "Barely moved", tone: "flat" };
+  return { text: `${d > 0 ? "+" : "−"}${Math.abs(d).toFixed(1)}`, tone: d > 0 ? "up" : "down" };
+}
+
+export async function getStanding(supabase: SupabaseClient, dishId: string): Promise<Standing | null> {
+  const { data: d, error } = await supabase
+    .from("dishes")
+    .select("avg_score, rating_count, space_id, space:spaces(name, region:regions(name, demonym)), restaurant:restaurants(city)")
+    .eq("id", dishId)
+    .maybeSingle<{
+      avg_score: number | null;
+      rating_count: number;
+      space_id: string | null;
+      space: { name: string; region: { name: string; demonym: string } | null } | null;
+      restaurant: { city: string };
+    }>();
+  if (error) throw error;
+  if (!d) return null;
+  // Ids and ranks only (not whole dish rows): the dishes of this list in this city, and the list's rankings.
+  const [inCity, rank] = await Promise.all([
+    d.space_id
+      ? supabase.from("dishes").select("id, restaurant:restaurants!inner(city)").eq("space_id", d.space_id).eq("restaurant.city", d.restaurant.city).returns<{ id: string }[]>()
+      : Promise.resolve({ data: [] as { id: string }[], error: null }),
+    getRankings(supabase, d.space_id ? { list: d.space_id } : { dish: dishId }),
+  ]);
+  if (inCity.error) throw inCity.error;
+  const rankOf = new Map(rank.map((x) => [x.dish_id, x.rank]));
+  const { position, ranked } = placeIn(inCity.data.map((x) => ({ id: x.id, rank: rankOf.get(x.id) ?? null })), dishId);
+  const r = rank.find((x) => x.dish_id === dishId);
+  return {
+    avg: d.avg_score === null ? null : Number(d.avg_score),
+    ratings: d.rating_count,
+    position,
+    ranked,
+    list: d.space?.name ?? null,
+    city: d.restaurant.city,
+    home: d.space?.region ? { demonym: d.space.region.demonym, region: d.space.region.name, count: r?.home_count ?? 0, avg: r?.home_avg ?? null } : null,
+  };
+}

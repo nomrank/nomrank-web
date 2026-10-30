@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
+import { getList, listHref } from "@/lib/rankings";
+import { dishSlug } from "@/lib/dishes";
 import { signupDetailsSchema, usernameSchema } from "@/lib/validation";
 
 export type OnboardingState = {
@@ -55,5 +57,9 @@ export async function createProfile(_: OnboardingState, formData: FormData): Pro
   // and the birthday can be added from Edit profile, so don't block sign-up on it.
   await supabase.from("profile_private").upsert({ date_of_birth, gender }, { onConflict: "user_id" });
   revalidatePath("/", "layout"); // the phone nav in the root layout was rendered signed out (no profile yet)
+  // First food they picked that is a real list: open its ranking.
+  for (const food of formData.getAll("food").slice(0, 5).map(String)) {
+    if (await getList(supabase, dishSlug(food))) redirect(listHref(food));
+  }
   redirect("/");
 }

@@ -57,14 +57,18 @@ async function Rate({ searchParams }: Pick<PageProps<"/rate">, "searchParams">) 
     // Desktop: the form on the left, what others said about the dish pinned on the right.
     <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start lg:gap-14 xl:gap-20">
       <div className="mx-auto w-full max-w-xl lg:mx-0 lg:max-w-none">
-        <BackLink href={dishHref(dish.restaurant.slug, dish.name)} />
-        <h1 className="mt-2 text-2xl leading-snug font-bold tracking-tight wrap-anywhere">How was the {dish.name}?</h1>
-        <p className="mt-1 mb-7 text-muted-foreground">
-          <DietMark diet={dish.diet} className="mr-1.5 align-[-0.1em]" />
-          at {dish.restaurant.name}, {dish.restaurant.area}
-          {mine && " · you've rated this before, saving updates it"}
-        </p>
         <RateForm
+          intro={
+            <>
+              <BackLink href={dishHref(dish.restaurant.slug, dish.name)} />
+              <h1 className="mt-2 text-2xl leading-snug font-bold tracking-tight wrap-anywhere">How was the {dish.name}?</h1>
+              <p className="mt-1 mb-7 text-muted-foreground">
+                <DietMark diet={dish.diet} className="mr-1.5 align-[-0.1em]" />
+                at {dish.restaurant.name}, {dish.restaurant.area}
+                {mine && " · you've rated this before, saving updates it"}
+              </p>
+            </>
+          }
           dish={dish}
           userId={userId}
           existing={mine && { score: mine.score, take: mine.take, photos: mine.photos.sort((a, b) => a.position - b.position).map((p) => p.path) }}

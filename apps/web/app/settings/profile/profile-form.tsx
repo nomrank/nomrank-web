@@ -7,6 +7,7 @@ import { DIETS, GENDERS } from "@/lib/profiles";
 import { cropSquareJpeg } from "@/lib/resize-image";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+import { RegionPicker, type PickableRegion } from "@/components/region-picker";
 import { Avatar } from "@/components/avatar";
 import { DietMark } from "@/components/diet-mark";
 import { DateOfBirthField } from "@/components/date-of-birth";
@@ -20,7 +21,7 @@ import { updateProfile, type ProfileFormState } from "./actions";
 type Props = {
   userId: string;
   handle: string;
-  regions: { slug: string; name: string }[];
+  regions: PickableRegion[];
   regionLockedUntil: string | null; // "21 November" while a recent change locks the home region, else null
   initial: {
     display_name: string;
@@ -316,14 +317,7 @@ export function ProfileForm({ userId, handle, regions, regionLockedUntil, initia
                   : "Where your home food is from. It powers Tastes like home, and you can change it once every 30 days."}
               </p>
               {regionLockedUntil && <input type="hidden" name="home_region" value={initial.home_region} />}
-              <div className="flex flex-wrap gap-2">
-                {regions.map((r) => (
-                  <label key={r.slug} className={cn(CHIP, chipState(region === r.slug), regionLockedUntil && "cursor-not-allowed opacity-60")}>
-                    <input type="radio" name="home_region" value={r.slug} checked={region === r.slug} onChange={() => setRegion(r.slug)} className="sr-only" />
-                    {r.name}
-                  </label>
-                ))}
-              </div>
+              <RegionPicker regions={regions} value={region} onChange={setRegion} name="home_region" className={cn(regionLockedUntil && "pointer-events-none opacity-60")} />
               {!regionLockedUntil && region !== initial.home_region && (
                 <p className="mt-2 text-sm text-mustard">Once saved, you can&apos;t change it again for 30 days.</p>
               )}

@@ -4,7 +4,7 @@ import { startTransition, useDeferredValue, useEffect, useRef, useState, ViewTra
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { asHomeTab, showTab, type HomeTab } from "@/lib/home-tab";
-import { CrownIcon, PlusIcon, SearchIcon, XIcon } from "lucide-react";
+import { CrownIcon, PlusIcon, SearchIcon, SwordsIcon, XIcon } from "lucide-react";
 import type { Profile } from "@/lib/auth";
 import type { Restaurant } from "@/lib/restaurants";
 import type { ShowDiet } from "@/lib/diet";
@@ -49,6 +49,13 @@ export function HomeView({ profile, restaurants, feed, leaders = [], showDiet = 
       wide
       action={
         <div className="flex items-center gap-2">
+          <Link
+            href="/battles"
+            className="hidden min-h-10 items-center gap-1.5 rounded-md border border-hairline px-3.5 text-sm font-semibold transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:inline-flex"
+          >
+            <SwordsIcon aria-hidden className="size-4 text-mustard" />
+            Battles
+          </Link>
           <Link
             href={profile ? "/rate" : "/login"}
             className="hidden min-h-10 items-center gap-1.5 rounded-md bg-ketchup px-3.5 text-sm font-semibold text-studio hover:brightness-110 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none md:inline-flex"
@@ -141,8 +148,6 @@ export function HomeView({ profile, restaurants, feed, leaders = [], showDiet = 
                   })}
                   className={cn(
                     "relative -mb-px min-h-11 text-sm font-semibold capitalize transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-                    // Rankings already has its own bottom-nav tab on phones; this row keeps it on desktop only.
-                    v === "rankings" && "hidden md:inline",
                     view === v ? "text-foreground" : "text-muted-foreground hover:text-foreground",
                   )}
                 >
@@ -192,12 +197,12 @@ function Rankings({ leaders }: { leaders: Leader[] }) {
           <Row
             href={listHref(list.name)}
             label={`Top ${list.name}`}
-            diet={leader?.diet}
             title={
               leader ? (
                 <span className="flex items-center gap-1.5 text-base font-bold wrap-anywhere">
                   <CrownIcon aria-label="Number one:" className="size-3.5 shrink-0 text-mustard" />
-                  {leader.name}
+                  <DietMark diet={leader.diet} className="size-3" />
+                  <span className="min-w-0">{leader.name}</span>
                 </span>
               ) : (
                 <span className="block text-base font-bold text-muted-foreground">Not rated yet</span>

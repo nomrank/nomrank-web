@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { listHref, listLeaders, rankList, type FoodList, type Ranking } from "./rankings";
+import { avgMove, listHref, listLeaders, placeIn, rankMove, rankList, type FoodList, type Ranking } from "./rankings";
 import type { DishDetail } from "./restaurants";
 
 const place = { slug: "vb", name: "Vidyarthi Bhavan", area: "Basavanagudi", city: "Bengaluru" };
@@ -48,5 +48,35 @@ describe("listLeaders", () => {
 describe("listHref", () => {
   it("uses the dish-style slug", () => {
     expect(listHref("Bisi Bele Bath")).toBe("/top/bisi-bele-bath");
+  });
+});
+
+describe("placeIn", () => {
+  it("counts only ranked dishes; a tie shares a place", () => {
+    const list = [{ id: "a", rank: 1 }, { id: "b", rank: 2 }, { id: "t", rank: 2 }, { id: "c", rank: null }];
+    expect(placeIn(list, "b")).toEqual({ position: 2, ranked: 3 });
+    expect(placeIn(list, "t")).toEqual({ position: 2, ranked: 3 });
+    expect(placeIn(list, "c")).toEqual({ position: null, ranked: 3 });
+    expect(placeIn(list, "zzz")).toEqual({ position: null, ranked: 3 });
+  });
+});
+
+describe("rankMove", () => {
+  it("says up when the number gets smaller, down when it grows", () => {
+    expect(rankMove(5, 3)).toEqual({ text: "Up 2", tone: "up" });
+    expect(rankMove(3, 4)).toEqual({ text: "Down 1", tone: "down" });
+    expect(rankMove(2, 2)).toMatchObject({ tone: "flat" });
+    expect(rankMove(null, 7)).toMatchObject({ tone: "up" });
+    expect(rankMove(4, null)).toBeNull();
+  });
+});
+
+describe("avgMove", () => {
+  it("rounds to one decimal and flags no change", () => {
+    expect(avgMove(8, 8.34)).toEqual({ text: "+0.3", tone: "up" });
+    expect(avgMove(8.4, 7.9)).toEqual({ text: "−0.5", tone: "down" });
+    expect(avgMove(8, 8.02)).toMatchObject({ tone: "flat" });
+    expect(avgMove(null, 9)).toMatchObject({ tone: "up" });
+    expect(avgMove(9, null)).toBeNull();
   });
 });

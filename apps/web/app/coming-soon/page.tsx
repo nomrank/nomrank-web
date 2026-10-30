@@ -3,6 +3,7 @@ import Link from "next/link";
 import { WaitlistForm } from "./waitlist-form";
 import { ScoreDemo } from "./score-demo";
 import { TakeDemo } from "./take-demo";
+import { FairRankDemo } from "./fair-rank-demo";
 import { FeatureList } from "./feature-list";
 import { Reveal } from "./reveal";
 import { Wordmark } from "@/components/brand";
@@ -67,6 +68,20 @@ export default function ComingSoonPage() {
 
       <section className={`${WRAP} py-14 lg:pt-12 lg:pb-32`}>
         <TakeDemo />
+      </section>
+
+      <section className={`${WRAP} grid grid-cols-1 items-center gap-10 py-14 lg:grid-cols-12 lg:gap-16 lg:py-24`}>
+        <div className="lg:col-span-5">
+          <h2 data-reveal className={H2}>
+            One 10 can&apos;t win.
+          </h2>
+          <p data-reveal style={{ "--i": 1 } as React.CSSProperties} className="mt-5 max-w-[40ch] text-[1.0625rem] leading-relaxed text-muted-foreground">
+            A brand-new dish with a single perfect score shouldn&apos;t beat a favourite that hundreds agree on. Flip the switch and watch.
+          </p>
+        </div>
+        <div data-reveal style={{ "--i": 2 } as React.CSSProperties} className="lg:col-span-7">
+          <FairRankDemo />
+        </div>
       </section>
 
       {/* Features as the app's own search list. */}

@@ -278,3 +278,29 @@ export async function changePassword(_: AdminResult, formData: FormData): Promis
   refresh();
   return { ok: Date.now() };
 }
+
+// A battle between two live dishes. In one city when both are there, otherwise a city war shown everywhere.
+export async function createBattle(_: AdminResult, formData: FormData): Promise<AdminResult> {
+  const a = id.safeParse(formData.get("dish_a"));
+  const b = id.safeParse(formData.get("dish_b"));
+  const tag = String(formData.get("tag") ?? "").trim();
+  if (!a.success || !b.success) return failed("Pick a dish for both sides.");
+  if (a.data === b.data) return failed("Pick two different dishes.");
+  if (tag.length < 3 || tag.length > 80) return failed("Give the battle a title of 3 to 80 characters.");
+  const supabase = await admin();
+  const { data: dishes } = await supabase.from("dishes").select("id, restaurant:restaurants(city)").in("id", [a.data, b.data]).returns<{ id: string; restaurant: { city: string } }[]>();
+  const cities = new Set((dishes ?? []).map((d) => d.restaurant.city));
+  const { error } = await supabase.rpc("admin_create_battle", { dish_a: a.data, dish_b: b.data, tag, city: cities.size === 1 ? [...cities][0] : null });
+  if (error) return failed(error.message.includes("live") ? "Both dishes must be live." : "Couldn't create that battle. Try again.");
+  refresh();
+  return { ok: Date.now() };
+}
+
+export async function deleteBattle(battle: string): Promise<AdminResult> {
+  if (!id.safeParse(battle).success) return failed("That battle isn't valid.");
+  const supabase = await admin();
+  const { error } = await supabase.rpc("admin_delete_battle", { battle });
+  if (error) return failed("Couldn't delete that battle. Try again.");
+  refresh();
+  return { ok: Date.now() };
+}

@@ -11,10 +11,11 @@ import {
   LayoutDashboardIcon,
   SearchIcon,
   StoreIcon,
+  SwordsIcon,
   UsersRoundIcon,
   UtensilsIcon,
 } from "lucide-react";
-import { appOrigin, getAdminStatus, getAdmins, getInvites, getPersonContent, getPlace, type AdminAccount, type AdminInvite, type AdminPlace, type PersonContent } from "@/lib/admin";
+import { appOrigin, getAdminBattles, getAdminStatus, getAdmins, getDishOptions, getInvites, getPersonContent, getPlace, type AdminAccount, type AdminInvite, type AdminPlace, type PersonContent } from "@/lib/admin";
 import { getCurrentUser } from "@/lib/auth";
 import { findPeople, getAdminCounts, getModerationLog, getOpenReports, getPendingDishes, type LogEntry } from "@/lib/admin";
 import { dishHref } from "@/lib/dishes";
@@ -25,9 +26,9 @@ import { REPORT_REASONS } from "@/lib/validation";
 import { DietMark } from "@/components/diet-mark";
 import { PageLoader } from "@/components/loader";
 import { Input } from "@/components/ui/input";
-import { approveDish, cancelInvite, deleteRestaurant, dismissReports, removeAdmin, removeContent } from "./actions";
+import { approveDish, cancelInvite, deleteBattle, deleteRestaurant, dismissReports, removeAdmin, removeContent } from "./actions";
 import { ActionButton, AddRestaurantForm, BanControls } from "./controls";
-import { AddDishForm, DishEditor, EditRestaurantForm, InviteAdminForm } from "./forms";
+import { AddDishForm, CreateBattleForm, DishEditor, EditRestaurantForm, InviteAdminForm } from "./forms";
 import { AdminShell, ChangeDefaultPassword, NotAdmin } from "./shell";
 
 export const metadata: Metadata = { title: "Admin · Nomrank", robots: { index: false } };
@@ -38,6 +39,7 @@ const TABS = [
   { key: "reports", label: "Reports", icon: FlagIcon },
   { key: "restaurants", label: "Restaurants", icon: StoreIcon },
   { key: "people", label: "People", icon: UsersRoundIcon },
+  { key: "battles", label: "Battles", icon: SwordsIcon },
   { key: "admins", label: "Admins", icon: CrownIcon },
   { key: "log", label: "Log", icon: ClipboardListIcon },
 ] as const;
@@ -114,6 +116,8 @@ async function Admin({ searchParams }: Pick<PageProps<"/admin">, "searchParams">
           ) : (
             <People q={q} people={await findPeople(supabase, q)} />
           )
+        ) : tab === "battles" ? (
+          <Battles battles={await getAdminBattles(supabase)} dishes={await getDishOptions(supabase)} />
         ) : tab === "admins" ? (
           <Admins admins={await getAdmins(supabase)} invites={status.super ? await getInvites(supabase) : []} me={userId} isSuper={status.super} />
         ) : (
@@ -583,6 +587,50 @@ function Admins({ admins, invites, me, isSuper }: { admins: AdminAccount[]; invi
             </li>
           ))}
         </ul>
+      </section>
+    </div>
+  );
+}
+
+// Head-to-head matchups people vote on. Voting is one person, one pick; deleting a battle clears its votes.
+function Battles({ battles, dishes }: { battles: Awaited<ReturnType<typeof getAdminBattles>>; dishes: Awaited<ReturnType<typeof getDishOptions>> }) {
+  return (
+    <div className="flex flex-col gap-6">
+      <section aria-labelledby="new-battle" className={CARD}>
+        <h2 id="new-battle" className="font-semibold">
+          Create a battle
+        </h2>
+        <p className="mt-1 mb-4 text-sm text-muted-foreground">Two live dishes. It shows in their city, or everywhere if they&apos;re in different cities.</p>
+        <CreateBattleForm dishes={dishes} />
+      </section>
+      <section aria-labelledby="battle-list">
+        <h2 id="battle-list" className={OVERLINE}>
+          {battles.length} {battles.length === 1 ? "battle" : "battles"}
+        </h2>
+        {battles.length ? (
+          <ul className="mt-2 divide-y divide-hairline">
+            {battles.map((b) => {
+              const n = b.votes.a + b.votes.b;
+              return (
+                <li key={b.id} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
+                    <p className="font-semibold wrap-anywhere">{b.tag}</p>
+                    <p className="text-sm text-muted-foreground wrap-anywhere">
+                      {b.a} <span className="text-faint">vs</span> {b.b}
+                    </p>
+                    <p className="mt-0.5 text-xs text-faint tabular-nums">
+                      {b.city ?? "City war"} · {n} {n === 1 ? "vote" : "votes"}
+                      {n > 0 && ` (${b.votes.a} to ${b.votes.b})`}
+                    </p>
+                  </div>
+                  <ActionButton run={deleteBattle} args={[b.id]} label="Delete" icon="remove" done="Battle deleted" confirm={n ? `Delete this battle and its ${n} votes?` : "Delete this battle?"} />
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <Empty icon={SwordsIcon}>No battles yet. Create the first one above.</Empty>
+        )}
       </section>
     </div>
   );
