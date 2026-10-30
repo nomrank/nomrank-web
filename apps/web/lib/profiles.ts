@@ -168,9 +168,9 @@ export async function getSaveStates(supabase: SupabaseClient, userId: string | n
   return Object.fromEntries(ids.filter((id) => !done.has(id)).map((id) => [id, saved.has(id)])) as Record<string, boolean>;
 }
 
-// Just the preferences, with defaults when the row doesn't exist yet (signed out → everything, Top).
+// Just the preferences, with defaults when the row doesn't exist yet (signed out → everything, New).
 export async function getPreferences(supabase: SupabaseClient, userId: string | null): Promise<{ show_diet: ShowDiet; feed_default: FeedDefault }> {
-  const fallback = { show_diet: "all" as const, feed_default: "top" as const };
+  const fallback = { show_diet: "all" as const, feed_default: "new" as const };
   if (!userId) return fallback;
   const details = await getPrivateDetails(supabase, userId);
   return details ? { show_diet: details.show_diet, feed_default: details.feed_default } : fallback;

@@ -17,6 +17,8 @@ const FEATURES = [
   { name: "Rankings for every food", text: "Top Biryani, Top Dosa and more. One lucky 10 can't buy the top spot.", Show: RankShow },
   { name: "Tastes like home", text: "How people from a dish's home region rate it, shown once three of them have.", Show: HomeShow },
   { name: "Agree or disagree", text: "Back a take or call it out. Every take shows how many people agree.", Show: VoteShow },
+  { name: "Battles", text: "Two dishes, one pick. Vote and see which side is winning.", Show: BattleShow },
+  { name: "Your city first", text: "Rankings follow your city. The feed shows takes from all of India.", Show: CityShow },
   { name: "Spaces for any food", text: "Every food gets its own leaderboard, and anyone can start one.", Show: SpacesShow },
   { name: "Follow people you trust", text: "Keep up with the people whose taste matches yours.", Show: FollowShow },
 ];
@@ -255,6 +257,41 @@ function VoteShow() {
       <p className="mt-2 text-[0.9375rem] leading-relaxed">bitter in the best way. had two before 9am</p>
       <div className="mt-4">
         <VoteButtons ratingId="tour" facts={214} cap={12} mode="own" />
+      </div>
+    </div>
+  );
+}
+
+function BattleShow() {
+  return (
+    <div data-ui className={CARD}>
+      <p className="text-[1.0625rem] font-semibold">Dadar or Fort?</p>
+      <div className="stagger mt-3 grid grid-cols-2 gap-2">
+        {[
+          { name: "Vada pav", at: "Dadar", share: 58, tone: "bg-ketchup" },
+          { name: "Vada pav", at: "Fort", share: 42, tone: "bg-mustard" },
+        ].map((s) => (
+          <div key={s.at} className={cn("rounded-xl p-3 text-studio", s.tone)}>
+            <p className="font-semibold">{s.name}</p>
+            <p className="text-[0.875rem]">{s.at}</p>
+            <p className="mt-2 text-[1.75rem] leading-none font-extrabold tabular-nums">{s.share}%</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CityShow() {
+  return (
+    <div data-ui className={CARD}>
+      <p className="text-[1.0625rem] font-semibold">Where are you eating?</p>
+      <div className="stagger mt-3 grid gap-2">
+        {["Bengaluru", "Mumbai", "Delhi", "Hyderabad"].map((c) => (
+          <span key={c} className={cn("flex min-h-10 items-center rounded-lg border px-3 font-semibold", c === "Mumbai" ? "border-mustard bg-raised" : "border-input")}>
+            {c}
+          </span>
+        ))}
       </div>
     </div>
   );

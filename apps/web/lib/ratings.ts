@@ -12,7 +12,7 @@ export type Review = {
   comments_count: number;
   created_at: string;
   author: { username: string; avatar: string | null; avatar_path: string | null };
-  dish: { id: string; name: string; diet: DishDiet; rating_count: number; avg_score: number | null; restaurant: { slug: string; name: string; area: string } };
+  dish: { id: string; name: string; diet: DishDiet; rating_count: number; avg_score: number | null; restaurant: { slug: string; name: string; area: string; city: string } };
   photos: { path: string; position: number }[];
 };
 export type Sort = "top" | "new";
@@ -20,7 +20,7 @@ export type FeedSort = Sort | "following";
 
 // dishes!inner: a take only shows when its dish does (dishes waiting for approval are hidden from everyone but their creator).
 const REVIEW_FIELDS =
-  "id, score, take, facts_count, cap_count, comments_count, created_at, author:profiles!ratings_user_id_fkey(username, avatar, avatar_path), dish:dishes!inner(id, name, diet, rating_count, avg_score, restaurant:restaurants!inner(slug, name, area)), photos:rating_photos(path, position)";
+  "id, score, take, facts_count, cap_count, comments_count, created_at, author:profiles!ratings_user_id_fkey(username, avatar, avatar_path), dish:dishes!inner(id, name, diet, rating_count, avg_score, restaurant:restaurants!inner(slug, name, area, city)), photos:rating_photos(path, position)";
 
 export const FEED_PAGE = 20;
 
@@ -61,22 +61,36 @@ function sorted<T extends { photos: { position: number }[] }>(rows: T[]) {
 }
 
 // The feed: everyone's takes by Top (net votes) or New, or only takes from the people you follow (`authors`), newest
-// first; one page at a time from `offset`, only dishes the diet preference allows, and only in `city` when one is picked.
+// first, from every city; one page at a time from `offset`, only dishes the diet preference allows.
 // shortcut: offset paging can repeat or skip a take when votes reorder Top between pages (the client drops repeats);
 // move to keyset paging if that shows up.
 export async function getFeed(
   supabase: SupabaseClient,
   sort: FeedSort,
   authors: string[] = [],
-  { offset = 0, limit = FEED_PAGE, show = "all", city = null }: { offset?: number; limit?: number; show?: ShowDiet; city?: City | null } = {},
+  { offset = 0, limit = FEED_PAGE, show = "all" }: { offset?: number; limit?: number; show?: ShowDiet } = {},
 ) {
   if (sort === "following" && !authors.length) return [];
   let q = supabase.from("ratings").select(REVIEW_FIELDS).not("take", "is", null);
   if (sort === "following") q = q.in("user_id", authors);
   if (show !== "all") q = q.in("dish.diet", dietsFor(show));
-  if (city) q = q.eq("dish.restaurant.city", city);
   q = sort === "top" ? q.order("net_votes", { ascending: false }).order("created_at", { ascending: false }) : q.order("created_at", { ascending: false });
   const { data, error } = await q.order("id").range(offset, offset + limit - 1).returns<Review[]>();
+  if (error) throw error;
+  return sorted(data);
+}
+
+// The takes people talk about most, for the sidebar. Its own query, not the loaded feed page, so it reads the same on
+// every sort. Same diet and city rules as the feed.
+export async function getMostDiscussed(supabase: SupabaseClient, { show = "all", city = null }: { show?: ShowDiet; city?: City | null } = {}) {
+  let q = supabase.from("ratings").select(REVIEW_FIELDS).not("take", "is", null).gt("comments_count", 0);
+  if (show !== "all") q = q.in("dish.diet", dietsFor(show));
+  if (city) q = q.eq("dish.restaurant.city", city);
+  const { data, error } = await q
+    .order("comments_count", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(60)
+    .returns<Review[]>();
   if (error) throw error;
   return sorted(data);
 }

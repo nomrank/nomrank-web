@@ -7,7 +7,7 @@ import { reportSchema } from "@/lib/validation";
 
 export type ReportState = { error?: string; sent?: boolean };
 
-// Report a take, a comment or a dish. Reporting the same thing again counts as done.
+// Report a take, a comment, a dish or a list. Reporting the same thing again counts as done.
 export async function sendReport(_: ReportState, formData: FormData): Promise<ReportState> {
   const { supabase, profile } = await getCurrentUser();
   if (!profile) redirect("/onboarding");

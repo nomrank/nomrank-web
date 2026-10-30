@@ -12,7 +12,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { sendReport, type ReportState } from "@/app/report-actions";
 
 type Props = {
-  targetType: "rating" | "comment" | "dish";
+  targetType: "rating" | "comment" | "dish" | "space";
   targetId: string;
   what: string; // "this take", "this comment", "this dish"
   signedIn: boolean;

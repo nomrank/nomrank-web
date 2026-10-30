@@ -19,7 +19,7 @@ export function Screen({ step, children }: ScreenProps) {
           ))}
         </span>
       </header>
-      <div className="mt-[12dvh] flex flex-1 flex-col">{children}</div>
+      <div className="mt-8 flex flex-1 flex-col md:mt-14">{children}</div>
     </main>
   );
 }

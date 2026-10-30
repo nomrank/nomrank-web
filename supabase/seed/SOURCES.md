@@ -61,4 +61,22 @@ admin site (Restaurants, then the place) once someone has checked what they are:
 - Death by Chocolate at Corner House (Several outlets, Bengaluru)
 - Banana Pudding at Magnolia Bakery (Indiranagar, Bengaluru)
 
-Mumbai and Delhi have no starting lists yet.
+## Mumbai and Delhi
+
+`mumbai-delhi-lists.sql` adds a shorter starting list for these two cities, gathered from the guides below in October 2026.
+Every place is named by at least one guide, but the guides vary in age and some disagree, so fix anything wrong from the
+admin site. Diet marks were set by hand from the dish itself.
+
+| City | List | Sources |
+| --- | --- | --- |
+| Mumbai | Vada pav | [EazyDiner](https://www.eazydiner.com/food-trends/a-foodies-guide-to-the-best-vada-pav-serving-places-in-mumbai), [The Hosteller](https://www.thehosteller.com/blogs/must-try-vada-pav-stores-in-mumbai) |
+| Mumbai | Pav bhaji, misal | [The Hosteller](https://www.thehosteller.com/blogs/from-vada-pav-to-malvani-masala-food-guide-to-Mumbai), [EazyDiner](https://www.eazydiner.com/food-trends/the-ultimate-guide-to-mumbais-finest-street-food-joints) |
+| Mumbai | Biryani | [LBB](https://lbb.in/mumbai/Best-Biryani-Joints-Mumbai-Food/) |
+| Mumbai | Seafood | [LBB](https://lbb.in/mumbai/seafood-restaurants-in-mumbai), [Homegrown](https://homegrown.co.in/article/13267/bombays-14-best-seafood-meals-for-every-budget) |
+| Mumbai | Kebabs | [TableJourney](https://tablejourney.com/india/mumbai/restaurants/) |
+| Mumbai | Dosa, idli, filter coffee | [Culture Trip](https://theculturetrip.com/asia/india/articles/the-6-best-south-indian-eateries-of-matunga), [Curly Tales](https://curlytales.com/10-best-south-indian-restaurants-in-mumbai-you-have-to-try-once/) |
+| Delhi | Chole bhature | [Homegrown](https://homegrown.co.in/homegrown-explore/a-homegrown-guide-to-delhis-iconic-chole-bhature-spots) |
+| Delhi | Butter chicken, nihari, paratha | [Culture Trip](https://theculturetrip.com/asia/india/articles/the-most-popular-dishes-in-delhi-india), [Slurrp](https://slurrp.com/article/exploring-delhis-top-10-famous-dishes-and-iconic-foods-1698923488399) |
+| Delhi | Kebabs | [Curly Tales](https://curlytales.com/?p=517987) |
+| Delhi | Momos | [Homegrown](https://homegrown.co.in/article/802349/a-locals-guide-to-delhis-best-momos), [Slurrp](https://slurrp.com/article/dolma-aunty-to-qds-10-iconic-momo-places-in-delhi-1695023727765) |
+| Delhi | Chaat, desserts | [Holidify](https://www.holidify.com/pages/street-food-in-old-delhi-3670.html), [Slurrp](https://www.slurrp.com/article/beyond-mithai-delhis-five-iconic-sweet-treats-1647917381209) |

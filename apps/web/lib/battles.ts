@@ -40,7 +40,7 @@ const side = (d: DishRow): BattleSide => ({
   count: d.rating_count,
 });
 
-// Battles for a city (and the city wars, which show everywhere), unvoted ones first so the feed starts with a fight
+// Battles for a city (and the city wars it is part of), unvoted ones first so the feed starts with a fight
 // you haven't picked a side in. `city` null means every city.
 export async function getBattles(supabase: SupabaseClient, userId: string | null, city: City | null): Promise<Battle[]> {
   let q = supabase
@@ -52,7 +52,9 @@ export async function getBattles(supabase: SupabaseClient, userId: string | null
   if (error) throw error;
   if (!data.length) return [];
 
-  const ids = data.map((b) => b.id);
+  // A city war only shows to the two cities in it.
+  const rows = data.filter((b) => !city || b.city || b.a.restaurant.city === city || b.b.restaurant.city === city);
+  const ids = rows.map((b) => b.id);
   const [tally, mine] = await Promise.all([
     supabase.from("battle_tally").select("battle_id, a, b").in("battle_id", ids),
     userId ? supabase.from("battle_votes").select("battle_id, side").eq("user_id", userId).in("battle_id", ids) : Promise.resolve({ data: [], error: null }),
@@ -62,7 +64,7 @@ export async function getBattles(supabase: SupabaseClient, userId: string | null
   const counts = new Map((tally.data ?? []).map((t) => [t.battle_id as string, { a: Number(t.a), b: Number(t.b) }]));
   const picks = new Map((mine.data ?? []).map((v) => [v.battle_id as string, v.side as "a" | "b"]));
 
-  const battles = data.map((b) => ({
+  const battles = rows.map((b) => ({
     id: b.id,
     tag: b.tag,
     city: b.city,

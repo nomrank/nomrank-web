@@ -1,12 +1,15 @@
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import type { City } from "./cities";
 
 export type Profile = {
   username: string;
   avatar: string | null;
   avatar_path: string | null;
   home_region: string;
+  city: City | null;
+  tour_done_at: string | null;
   banned_at: string | null;
   regions: { name: string; demonym: string } | null;
 };
@@ -42,7 +45,7 @@ export async function getCurrentUser({ allowSuspended = false } = {}) {
 async function getProfile(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
   const { data: profile, error } = await supabase
     .from("profiles")
-    .select("username, avatar, avatar_path, home_region, banned_at, regions(name, demonym)")
+    .select("username, avatar, avatar_path, home_region, city, tour_done_at, banned_at, regions(name, demonym)")
     .eq("id", userId)
     .maybeSingle<Profile>();
   if (error) throw error;

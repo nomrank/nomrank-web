@@ -145,7 +145,7 @@ function LoginForm({ mode, go, initial, prefill }: { mode: Mode; go: (m: Mode, e
           </div>
         )}
 
-        <FieldGroup className="mt-auto md:mt-2">
+        <FieldGroup>
           <Field data-invalid={error || undefined}>
             <FieldLabel htmlFor="email">Your email</FieldLabel>
             <Input

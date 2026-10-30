@@ -41,6 +41,17 @@ const SECTIONS: LegalSection[] = [
             , via Wikimedia Commons. Shown cropped.
           </li>
         ))}
+        <li>
+          The other food photos on the coming-soon page come from{" "}
+          <a href="https://unsplash.com" className={LINK}>
+            Unsplash
+          </a>
+          , used under the{" "}
+          <a href="https://unsplash.com/license" className={LINK}>
+            Unsplash License
+          </a>
+          . Shown cropped.
+        </li>
       </ul>
     ),
   },
@@ -51,7 +62,7 @@ export default function CreditsPage() {
     <LegalPage
       title="Credits"
       updated="24 October 2026"
-      intro={<p>Nomrank uses these photos under their Creative Commons licences. Thank you to the people who made them.</p>}
+      intro={<p>Nomrank uses these photos under their licences. Thank you to the people who made them.</p>}
       sections={SECTIONS}
     />
   );

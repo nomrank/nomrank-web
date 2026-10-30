@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { commentSchema, dishNameSchema, emailSchema, favouritesSchema, isAtLeast13, passwordSchema, preferencesSchema, privacySchema, profileSchema, ratingSchema, reportSchema, restaurantSchema, restaurantSlug, signupDetailsSchema, usernameSchema } from "./validation";
+import { commentSchema, dishNameSchema, spaceNameSchema, emailSchema, favouritesSchema, isAtLeast13, passwordSchema, preferencesSchema, privacySchema, profileSchema, ratingSchema, reportSchema, restaurantSchema, restaurantSlug, signupDetailsSchema, usernameSchema } from "./validation";
 
 describe("usernameSchema", () => {
   it.each([
@@ -230,4 +230,13 @@ describe("passwordSchema", () => {
     ["a".repeat(72), true],
     ["a".repeat(73), false],
   ])("%s → %s", (password, ok) => expect(passwordSchema.safeParse(password).success).toBe(ok));
+});
+
+describe("spaceNameSchema", () => {
+  it("trims and tidies a food name, and refuses symbols or a single letter", () => {
+    expect(spaceNameSchema.parse("  Pani   Puri ")).toBe("Pani Puri");
+    expect(spaceNameSchema.safeParse("a").success).toBe(false);
+    expect(spaceNameSchema.safeParse("!!! ???").success).toBe(false);
+    expect(spaceNameSchema.safeParse("x".repeat(41)).success).toBe(false);
+  });
 });

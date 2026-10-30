@@ -73,6 +73,7 @@ export function ReviewCard({ review: r, vote, viewer, showDish = true, full, inM
                     >
                       {r.dish.restaurant.name}
                     </Link>
+                    {` · ${r.dish.restaurant.city}`}
                   </p>
                 )}
                 {/* Everyone's score for the dish shows on the opened post, not on feed cards. */}

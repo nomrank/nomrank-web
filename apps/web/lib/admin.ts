@@ -85,7 +85,7 @@ export async function getOpenReports(supabase: SupabaseClient): Promise<ReportGr
   if (error) throw error;
 
   const ids = (type: ReportTarget) => [...new Set(data.filter((r) => r.target_type === type).map((r) => r.target_id))];
-  const [ratings, comments, dishes] = await Promise.all([
+  const [ratings, comments, dishes, spaces] = await Promise.all([
     ids("rating").length
       ? supabase.from("ratings").select("id, score, take, user_id, dish:dishes(name, restaurant:restaurants(slug, name))").in("id", ids("rating"))
       : { data: [], error: null },
@@ -93,8 +93,9 @@ export async function getOpenReports(supabase: SupabaseClient): Promise<ReportGr
     ids("dish").length
       ? supabase.from("dishes").select("id, name, created_by, restaurant:restaurants(slug, name)").in("id", ids("dish"))
       : { data: [], error: null },
+    ids("space").length ? supabase.from("spaces").select("id, name, created_by").in("id", ids("space")) : { data: [], error: null },
   ]);
-  for (const r of [ratings, comments, dishes]) if (r.error) throw r.error;
+  for (const r of [ratings, comments, dishes, spaces]) if (r.error) throw r.error;
 
   type T = NonNullable<ReportGroup["target"]>;
   const targets = new Map<string, Omit<T, "author">>();
@@ -104,6 +105,9 @@ export async function getOpenReports(supabase: SupabaseClient): Promise<ReportGr
     targets.set(c.id, { text: c.body, context: "Comment", href: `/review/${c.rating_id}#comments`, author_id: c.user_id });
   for (const d of (dishes.data ?? []) as unknown as { id: string; name: string; created_by: string | null; restaurant: { slug: string; name: string } }[])
     targets.set(d.id, { text: d.name, context: `Dish at ${d.restaurant.name}`, href: `/r/${d.restaurant.slug}/${encodeURIComponent(dishKey(d.name).replaceAll(" ", "-"))}`, author_id: d.created_by });
+
+  for (const s of (spaces.data ?? []) as { id: string; name: string; created_by: string | null }[])
+    targets.set(s.id, { text: s.name, context: "Food list", href: `/top/${encodeURIComponent(dishKey(s.name).replaceAll(" ", "-"))}`, author_id: s.created_by });
 
   const handles = await handlesOf(supabase, [...data.map((r) => r.reporter_id), ...[...targets.values()].map((t) => t.author_id ?? "")]);
   const groups = new Map<string, ReportGroup>();

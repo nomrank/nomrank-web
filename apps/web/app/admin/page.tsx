@@ -47,7 +47,7 @@ type Tab = (typeof TABS)[number]["key"];
 
 const OVERLINE = "text-xs font-semibold tracking-[0.08em] text-faint uppercase";
 const CARD = "rounded-2xl border border-hairline bg-paper p-4 sm:p-5";
-const WHAT = { rating: "Take", comment: "Comment", dish: "Dish" } as const;
+const WHAT = { rating: "Take", comment: "Comment", dish: "Dish", space: "List" } as const;
 
 export default function AdminPage({ searchParams }: PageProps<"/admin">) {
   return (
@@ -367,7 +367,7 @@ const VERBS: Record<string, string> = {
   make_admin: "made an admin:",
   remove_admin: "removed an admin:",
 };
-const NOUNS: Record<string, string> = { dish: "a dish", rating: "a take", comment: "a comment", account: "an account", restaurant: "a restaurant" };
+const NOUNS: Record<string, string> = { dish: "a dish", rating: "a take", comment: "a comment", account: "an account", restaurant: "a restaurant", space: "a list" };
 
 function LogList({ entries }: { entries: LogEntry[] }) {
   if (!entries.length) return <p className="mt-2 text-sm text-muted-foreground">Nothing yet.</p>;

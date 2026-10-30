@@ -1,60 +1,103 @@
 import Link from "next/link";
-import { BookOpenIcon, CameraIcon, FileTextIcon, HeartHandshakeIcon, MailIcon, ScaleIcon, SettingsIcon, ShieldIcon } from "lucide-react";
 import { Wordmark } from "@/components/brand";
+import { cn } from "@/lib/utils";
 
-const LINKS = [
-  { href: "/about", label: "How Nomrank works", icon: BookOpenIcon },
-  { href: "/about#rankings", label: "How rankings work", icon: ScaleIcon },
-  { href: "/about#guidelines", label: "Community guidelines", icon: HeartHandshakeIcon },
-  { href: "/settings", label: "Settings", icon: SettingsIcon },
-  { href: "/terms", label: "Terms of Service", icon: FileTextIcon },
-  { href: "/privacy", label: "Privacy Policy", icon: ShieldIcon },
+const LINK = "rounded-sm transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none";
+
+const COLUMNS = [
+  {
+    title: "Explore",
+    links: [
+      { href: "/?tab=rankings", label: "Rankings" },
+      { href: "/battles", label: "Battles", fresh: true },
+      { href: "/rate", label: "Rate a dish" },
+      { href: "/settings", label: "Settings" },
+    ],
+  },
+  {
+    title: "Learn",
+    links: [
+      { href: "/about", label: "How Nomrank works" },
+      { href: "/about#rankings", label: "How rankings work" },
+      { href: "/about#guidelines", label: "Community guidelines" },
+    ],
+  },
 ];
 
 // Before launch (COMING_SOON=1, see proxy.ts) only these pages are open, so the footer links to just them.
-const PRELAUNCH_LINKS = [
-  { href: "/", label: "Join the waitlist", icon: MailIcon },
-  { href: "/about", label: "How Nomrank works", icon: BookOpenIcon },
-  { href: "/terms", label: "Terms of Service", icon: FileTextIcon },
-  { href: "/privacy", label: "Privacy Policy", icon: ShieldIcon },
-  { href: "/credits", label: "Credits", icon: CameraIcon },
+const PRELAUNCH_COLUMNS = [
+  {
+    title: "Nomrank",
+    links: [
+      { href: "/", label: "Join the waitlist" },
+      { href: "/about", label: "How Nomrank works" },
+      { href: "/about#rankings", label: "How rankings work" },
+      { href: "/about#guidelines", label: "Community guidelines" },
+    ],
+  },
 ];
 
-// On every browsing page: the brand, the links that explain how things work, and the one disclaimer
-// (scores are users' opinions; no restaurant ties) so pages don't each repeat it.
-export function SiteFooter() {
-  // Read on the server. The client-side homepage also renders this footer, but before launch the proxy never serves it.
-  const prelaunch = process.env.COMING_SOON === "1";
+const LEGAL = [
+  { href: "/terms", label: "Terms" },
+  { href: "/privacy", label: "Privacy" },
+  { href: "/credits", label: "Credits" },
+];
+
+// The end of every page: the brand, the links, the one disclaimer (scores are users' opinions; no restaurant ties) so
+// pages don't each repeat it, and the name set huge and cut off by the bottom of the page.
+export function SiteFooter({ prelaunch = process.env.COMING_SOON === "1", className }: { prelaunch?: boolean; className?: string }) {
+  const columns = prelaunch ? PRELAUNCH_COLUMNS : COLUMNS;
   return (
-    <footer className="mx-auto mt-6 w-full md:mt-16 max-w-6xl border-t border-hairline px-5 pt-8 lg:px-8">
-      <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <Wordmark />
-          <p className="mt-2 max-w-xs text-sm text-muted-foreground">Rate the dish, not the place.</p>
+    <footer className={cn("mt-10 w-full overflow-hidden border-t border-hairline md:mt-12", className)}>
+      <div className="mx-auto w-full max-w-[76rem] px-5 pt-8 sm:px-8 lg:px-10 lg:pt-10">
+        <div className="flex flex-col gap-6 md:flex-row md:justify-between">
+          <div>
+            <Wordmark />
+            <p className="mt-3 text-sm text-muted-foreground">Rate the dish, not the place.</p>
+          </div>
+          <nav aria-label="Footer" className="flex flex-wrap gap-x-16 gap-y-8 md:gap-x-20">
+            {columns.map((c) => (
+              <div key={c.title}>
+                <h2 className="text-sm text-muted-foreground">{c.title}</h2>
+                <ul className="mt-1.5 flex flex-col">
+                  {c.links.map((l) => (
+                    <li key={l.href}>
+                      <Link href={l.href} className={`inline-flex min-h-9 items-center gap-2 font-medium text-foreground/90 ${LINK}`}>
+                        {l.label}
+                        {"fresh" in l && <span className="rounded-full bg-raised px-2 py-0.5 text-xs font-semibold text-mustard">New</span>}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </nav>
         </div>
-        <nav aria-label="Footer" className="grid grid-cols-2 gap-x-8 gap-y-1 sm:gap-x-12">
-          {(prelaunch ? PRELAUNCH_LINKS : LINKS).map(({ href, label, icon: Icon }) => (
-            <Link
-              key={href}
-              href={href}
-              className="-mx-1.5 inline-flex min-h-10 items-center gap-2 rounded-md px-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-            >
-              <Icon aria-hidden className="size-4 shrink-0 text-faint" />
-              {label}
-            </Link>
-          ))}
-        </nav>
+
+        <div className="mt-6 flex flex-col gap-1 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+          <p>© 2026 Nomrank. All rights reserved.</p>
+          <nav aria-label="Legal" className="-my-2 flex gap-5">
+            {LEGAL.map((l) => (
+              <Link key={l.href} href={l.href} className={`inline-flex min-h-10 items-center ${LINK}`}>
+                {l.label}
+              </Link>
+            ))}
+          </nav>
+        </div>
+        <div className="mt-3 max-w-[95ch] space-y-1 text-xs leading-relaxed text-faint">
+          <p>
+            {prelaunch
+              ? "Nomrank opens soon."
+              : "Scores, rankings and takes are the personal opinions of people on Nomrank. Nomrank isn't affiliated with, or paid by, any restaurant listed."}
+          </p>
+          <p>
+            Nomrank and its original branding, design, website content, and proprietary materials are protected by applicable intellectual property laws. Unauthorised copying, reproduction, distribution, or commercial use without prior written permission is prohibited.
+          </p>
+        </div>
       </div>
-      <div className="mt-6 space-y-2 text-xs leading-relaxed text-faint">
-        <p>
-          {prelaunch
-            ? "Nomrank opens soon."
-            : "Scores, rankings and takes are the personal opinions of people on Nomrank. Nomrank isn't affiliated with, or paid by, any restaurant listed."}
-        </p>
-        <p>© 2026 Nomrank. All rights reserved.</p>
-        <p>
-          Nomrank and its original branding, design, website content, and proprietary materials are protected by applicable intellectual property laws. Unauthorised copying, reproduction, distribution, or commercial use without prior written permission is prohibited.
-        </p>
+
+      <div aria-hidden className="mt-6 h-[clamp(3.5rem,10vw,9rem)] select-none">
+        <p className="text-center font-wordmark text-[24vw] leading-[0.82] font-extrabold tracking-[-0.045em] whitespace-nowrap text-spotlight/[0.07]">nomrank</p>
       </div>
     </footer>
   );

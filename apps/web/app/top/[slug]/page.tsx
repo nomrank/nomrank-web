@@ -6,6 +6,7 @@ import { ChevronRightIcon, CrownIcon, HouseHeartIcon, PlusIcon, ScaleIcon, Sprou
 import { getViewer } from "@/lib/auth";
 import { getCity } from "@/lib/city";
 import { CityPicker } from "@/components/city-picker";
+import { ReportButton } from "@/components/report-button";
 import { shareList } from "@/lib/share";
 import { allows } from "@/lib/diet";
 import { dishHref } from "@/lib/dishes";
@@ -46,7 +47,7 @@ async function Ranking({ params }: Pick<PageProps<"/top/[slug]">, "params">) {
   const { supabase, userId, profile } = await getViewer();
   const list = await getList(supabase, decodeURIComponent(slug));
   if (!list) notFound();
-  const city = await getCity();
+  const city = await getCity(profile);
   const [all, prefs, lists, listed, rankings] = await Promise.all([
     getRankedList(supabase, list.id, city),
     getPreferences(supabase, userId),
@@ -89,6 +90,7 @@ async function Ranking({ params }: Pick<PageProps<"/top/[slug]">, "params">) {
               </Link>
             </p>
           )}
+          <ReportButton targetType="space" targetId={list.id} what="this list" signedIn={Boolean(profile)} className="-ml-2 mt-1" />
         </header>
 
         {ranked.length > 0 ? (

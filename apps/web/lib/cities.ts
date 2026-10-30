@@ -2,7 +2,9 @@
 export const CITIES = ["Bengaluru", "Mumbai", "Delhi", "Hyderabad"] as const;
 export type City = (typeof CITIES)[number];
 
-// The city someone browses is remembered in this cookie (no cookie: all cities), so it works signed out too.
+// A member's city lives on their profile; this cookie covers signed-out visitors (no city: all cities).
 export const CITY_COOKIE = "city";
+// Set when someone answers "Not now", so the question isn't asked again on this device.
+export const CITY_ASKED_COOKIE = "city_asked";
 
 export const asCity = (value: unknown): City | null => ((CITIES as readonly unknown[]).includes(value) ? (value as City) : null);

@@ -20,7 +20,7 @@ import { asCity } from "@/lib/cities";
 export type AdminResult = { error?: string; ok?: number };
 
 const id = z.uuid();
-const target = z.enum(["rating", "comment", "dish"]);
+const target = z.enum(["rating", "comment", "dish", "space"]);
 
 async function admin() {
   const { supabase } = await getCurrentUser();

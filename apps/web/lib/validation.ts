@@ -22,6 +22,17 @@ export const usernameSchema = z
   );
 
 // Mirrors the dishes.name checks in the database (trimmed, 2–60 chars, not just symbols).
+export const spaceNameSchema = z
+  .string()
+  .transform((s) => s.trim().replace(/\s+/g, " "))
+  .pipe(
+    z
+      .string()
+      .min(2, "Give the food a name (at least 2 characters).")
+      .max(40, "Keep it under 40 characters.")
+      .refine((s) => s.replace(/[^a-z]/gi, "") !== "", "Use letters, not just symbols."),
+  );
+
 export const dishNameSchema = z
   .string()
   .transform((s) => s.trim().replace(/\s+/g, " "))
@@ -113,7 +124,7 @@ export const favouritesSchema = z
   .max(4, "Pin up to 4 favourites.")
   .refine((ids) => new Set(ids).size === ids.length, "Each favourite can be pinned once.");
 
-// Mirrors public.reports: what's being reported, why (reasons differ for takes, comments and dishes, as in the
+// Mirrors public.reports: what's being reported, why (reasons differ for takes, comments, dishes and lists, as in the
 // database check), and an optional note (≤300).
 export const REPORT_REASONS = {
   rating: [
@@ -140,13 +151,19 @@ export const REPORT_REASONS = {
     { value: "inappropriate", label: "Inappropriate name", hint: "" },
     { value: "other", label: "Something else", hint: "" },
   ],
+  space: [
+    { value: "duplicate", label: "Duplicate list", hint: "The same food under another name" },
+    { value: "inappropriate", label: "Inappropriate name", hint: "" },
+    { value: "spam", label: "Spam or self-promotion", hint: "A brand or a joke, not a food" },
+    { value: "other", label: "Something else", hint: "" },
+  ],
 } as const;
 
 export type ReportTarget = keyof typeof REPORT_REASONS;
 
 export const reportSchema = z
   .object({
-    target_type: z.enum(["rating", "comment", "dish"]),
+    target_type: z.enum(["rating", "comment", "dish", "space"]),
     target_id: z.uuid(),
     reason: z.string(),
     note: optionalText(300, "Keep the note under 300 characters."),

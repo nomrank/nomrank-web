@@ -26,6 +26,7 @@ Launch: Bengaluru, Mumbai, Delhi and Hyderabad (cities in `apps/web/lib/cities.t
 - **Leaderboard rank** uses a Bayesian (weighted) average, so one 10/10 can't top a Space.
 - **Tastes like home** = average rating from users whose `home_region` equals the dish's `origin_region`. Show only when there are 3 or more such ratings, with the count ("8.7 from 12 Hyderabadis"). Hidden for dishes with no origin region.
 - One `home_region` per user.
+- `home_region` is where you grew up; `city` (one of the launch cities) is where you eat now. The home feed shows every city; rankings, dishes, places and sidebars follow your city.
 - Anti-gaming: one rating per user per dish; new accounts weigh less in rankings.
 - Tone: playful, Gen-Z, celebrating home food. Never region-vs-region framing.
 

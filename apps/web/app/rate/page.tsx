@@ -11,6 +11,7 @@ import { DietMark } from "@/components/diet-mark";
 import { dishHref } from "@/lib/dishes";
 import { DishPicker } from "./dish-picker";
 import { filterMenus } from "@/lib/diet";
+import { getCity } from "@/lib/city";
 import { getPreferences } from "@/lib/profiles";
 import { RateForm } from "./rate-form";
 import { DishGlance } from "./dish-glance";
@@ -37,7 +38,7 @@ async function Rate({ searchParams }: Pick<PageProps<"/rate">, "searchParams">) 
       <div className="mx-auto w-full max-w-xl lg:max-w-none">
         <BackLink href="/" />
         <h1 className="mt-2 mb-6 text-2xl leading-tight font-bold tracking-tight">What did you eat?</h1>
-        <DishPicker restaurants={filterMenus(await getRestaurants(supabase), (await getPreferences(supabase, userId)).show_diet)} />
+        <DishPicker restaurants={filterMenus(await getRestaurants(supabase), (await getPreferences(supabase, userId)).show_diet)} city={await getCity(profile)} />
       </div>
     );
   }

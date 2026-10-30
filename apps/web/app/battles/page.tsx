@@ -21,7 +21,7 @@ export default function BattlesPage({ searchParams }: PageProps<"/battles">) {
       <Suspense
         fallback={
           <>
-            <Header city={null} />
+            <Header />
             <PageLoader />
           </>
         }
@@ -32,21 +32,21 @@ export default function BattlesPage({ searchParams }: PageProps<"/battles">) {
   );
 }
 
-function Header({ city }: { city: Awaited<ReturnType<typeof getCity>> }) {
+function Header({ city }: { city?: Awaited<ReturnType<typeof getCity>> }) {
   return (
-    <header className="mx-auto flex w-full max-w-3xl flex-col gap-3 px-5 pb-3 lg:px-8">
-      <div className="flex h-10 items-center justify-between">
+    <header className="mx-auto flex w-full max-w-3xl px-5 pb-3 lg:px-8">
+      <div className="flex h-10 w-full items-center justify-between">
         <Wordmark />
+        {city !== undefined && <CityPicker city={city} />}
       </div>
-      <CityPicker city={city} />
     </header>
   );
 }
 
 async function Feed({ searchParams }: Pick<PageProps<"/battles">, "searchParams">) {
   const { b } = await searchParams;
-  const { supabase, userId } = await getViewer();
-  const city = await getCity();
+  const { supabase, userId, profile } = await getViewer();
+  const city = await getCity(profile);
   const battles = await getBattles(supabase, userId, city);
   return (
     <>

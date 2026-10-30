@@ -3,6 +3,7 @@
 import { useDeferredValue, useState } from "react";
 import { SearchIcon } from "lucide-react";
 import type { Restaurant } from "@/lib/restaurants";
+import type { City } from "@/lib/cities";
 import { dishKey } from "@/lib/dishes";
 import { Input } from "@/components/ui/input";
 import { Row } from "@/components/row";
@@ -10,13 +11,15 @@ import { DishAvg } from "@/components/dish-avg";
 import { DishGroupRow, groupDishes } from "@/components/dish-group";
 
 // Step one of rating: find the dish. A dish served at several places shows once, and opens to pick the place.
-export function DishPicker({ restaurants }: { restaurants: Restaurant[] }) {
+// Your city's dishes show first; searching reaches every city, for what you ate on a trip.
+export function DishPicker({ restaurants, city = null }: { restaurants: Restaurant[]; city?: City | null }) {
   const [query, setQuery] = useState("");
   const q = dishKey(useDeferredValue(query));
+  const near = city ? restaurants.filter((r) => r.city === city) : restaurants;
   const groups = groupDishes(
-    q ? restaurants.map((r) => ({ ...r, dishes: r.dishes.filter((d) => dishKey(`${d.name} ${r.name}`).includes(q)) })) : restaurants,
+    q ? restaurants.map((r) => ({ ...r, dishes: r.dishes.filter((d) => dishKey(`${d.name} ${r.name}`).includes(q)) })) : near,
   ).sort((a, b) => a.name.localeCompare(b.name));
-  const popular = restaurants
+  const popular = near
     .flatMap((r) => r.dishes.map((d) => ({ ...d, place: r })))
     .filter((d) => d.rating_count > 0)
     .sort((a, b) => b.rating_count - a.rating_count)

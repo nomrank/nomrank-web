@@ -26,6 +26,7 @@ export function MealCard({ reviews, votes, viewer }: Props) {
           <Link href={`/r/${dish.restaurant.slug}`} className="font-semibold wrap-anywhere hover:underline">
             {dish.restaurant.name}
           </Link>
+          <span className="text-muted-foreground"> in {dish.restaurant.city}</span>
         </p>
         <time dateTime={latest} className="shrink-0 self-start text-faint">
           {timeAgo(latest)}

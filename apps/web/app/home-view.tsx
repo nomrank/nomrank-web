@@ -24,15 +24,17 @@ import { Input } from "@/components/ui/input";
 import { PageShell } from "@/components/page-shell";
 import { Row, dishCount } from "@/components/row";
 import { CityPicker } from "@/components/city-picker";
+import { FirstTour } from "@/components/first-tour";
+import { StartSpace } from "./top/start-space";
 import type { City } from "@/lib/cities";
 import { DishGroupRow, groupDishes, type DishGroup } from "@/components/dish-group";
 
 type View = HomeTab;
 type Feed = { sort: FeedSort; reviews: Review[]; votes: Record<string, Vote> };
 
-type HomeProps = { profile: Profile | null; restaurants: Restaurant[]; feed: Feed; leaders?: Leader[]; showDiet?: ShowDiet; notice?: string; unread?: number; initialView?: View; city?: City | null };
+type HomeProps = { profile: Profile | null; restaurants: Restaurant[]; feed: Feed; leaders?: Leader[]; showDiet?: ShowDiet; notice?: string; unread?: number; initialView?: View; city?: City | null; askCity?: boolean; discussed?: Review[]; showTour?: boolean };
 
-export function HomeView({ profile, restaurants, feed, leaders = [], showDiet = "all", notice, unread = 0, initialView = "takes", city = null }: HomeProps) {
+export function HomeView({ profile, restaurants, feed, leaders = [], showDiet = "all", notice, unread = 0, initialView = "takes", city = null, askCity = false, discussed = [], showTour = false }: HomeProps) {
   const [query, setQuery] = useState("");
   const [view, setView] = useState<View>(initialView);
   // The address changed (a tab here, the bottom nav, back/forward): follow it.
@@ -49,6 +51,7 @@ export function HomeView({ profile, restaurants, feed, leaders = [], showDiet = 
       wide
       action={
         <div className="flex items-center gap-2">
+          <CityPicker city={city} ask={askCity} />
           <Link
             href="/battles"
             className="hidden min-h-10 items-center gap-1.5 rounded-md border border-hairline px-3.5 text-sm font-semibold transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:inline-flex"
@@ -84,6 +87,7 @@ export function HomeView({ profile, restaurants, feed, leaders = [], showDiet = 
       }
     >
       <h1 className="sr-only">Nomrank</h1>
+      {showTour && <FirstTour />}
       {showDiet !== "all" && (
         <p className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
           <span className="flex gap-0.5">
@@ -110,7 +114,6 @@ export function HomeView({ profile, restaurants, feed, leaders = [], showDiet = 
       {/* Desktop: the feed on the left, a pinned side column on the right. Phones get the feed alone. */}
       <div className="flex flex-1 flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-start lg:gap-12 xl:gap-16">
         <div className="flex min-h-full flex-1 flex-col">
-          <CityPicker city={city} className="mb-3" />
           <div className="relative">
             <SearchIcon aria-hidden className="pointer-events-none absolute top-1/2 left-3.5 size-5 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -166,9 +169,12 @@ export function HomeView({ profile, restaurants, feed, leaders = [], showDiet = 
             {q ? (
               <Results q={q} restaurants={restaurants} />
             ) : view === "takes" ? (
-              <Takes key={`${feed.sort}-${city}`} feed={feed} viewer={profile?.username ?? null} city={city} />
+              <Takes key={feed.sort} feed={feed} viewer={profile?.username ?? null} />
             ) : view === "rankings" ? (
-              <Rankings leaders={leaders} />
+              <>
+                <Rankings leaders={leaders} />
+                {profile && <StartSpace />}
+              </>
             ) : view === "dishes" ? (
               <Dishes groups={groupDishes(restaurants)} />
             ) : (
@@ -178,7 +184,7 @@ export function HomeView({ profile, restaurants, feed, leaders = [], showDiet = 
         </div>
 
         <aside aria-label="Around Nomrank" className="hidden [scrollbar-width:none] lg:sticky [&::-webkit-scrollbar]:hidden lg:top-6 lg:flex lg:max-h-[calc(100dvh-3rem)] lg:flex-col lg:gap-9 lg:overflow-x-hidden lg:overflow-y-auto lg:px-2 lg:pb-6">
-          <MostDiscussed reviews={feed.reviews} />
+          <MostDiscussed reviews={discussed} />
           <ByArea restaurants={restaurants} compact />
         </aside>
       </div>
@@ -354,7 +360,7 @@ function Results({ q, restaurants }: { q: string; restaurants: Restaurant[] }) {
 const placeCount = (n: number) => (n === 1 ? "1 place" : `${n} places`);
 
 // The feed, one page at a time: when the end comes into view, the next page loads and joins the list.
-function Takes({ feed, viewer, city }: { feed: Feed; viewer: string | null; city: City | null }) {
+function Takes({ feed, viewer }: { feed: Feed; viewer: string | null }) {
   const [more, setMore] = useState<{ reviews: Review[]; votes: Record<string, Vote> }>({ reviews: [], votes: {} });
   const [fetched, setFetched] = useState(feed.reviews.length); // rows asked for so far (the next offset)
   const [done, setDone] = useState(feed.reviews.length < FEED_PAGE);
@@ -392,7 +398,7 @@ function Takes({ feed, viewer, city }: { feed: Feed; viewer: string | null; city
   return (
     <section aria-label="Takes">
       <nav aria-label="Sort takes" className="mb-1 flex gap-4 text-sm">
-        {(viewer ? (["top", "new", "following"] as const) : (["top", "new"] as const)).map((s) => (
+        {(viewer ? (["new", "top", "following"] as const) : (["new", "top"] as const)).map((s) => (
           <Link
             key={s}
             href={`/?sort=${s}`}
@@ -431,7 +437,7 @@ function Takes({ feed, viewer, city }: { feed: Feed; viewer: string | null; city
         </>
       ) : (
         <div className="py-10 text-center">
-          <p className="font-semibold">{feed.sort === "following" ? "Nothing from your people yet" : city ? `No takes in ${city} yet` : "No takes yet"}</p>
+          <p className="font-semibold">{feed.sort === "following" ? "Nothing from your people yet" : "No takes yet"}</p>
           <p className="mt-1 text-sm text-muted-foreground">
             {feed.sort === "following"
               ? "Follow people from their profiles and their takes land here."

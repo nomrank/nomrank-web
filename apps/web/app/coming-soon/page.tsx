@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { WaitlistForm } from "./waitlist-form";
+import { HeroBand } from "./hero-band";
 import { ScoreDemo } from "./score-demo";
 import { TakeDemo } from "./take-demo";
 import { FairRankDemo } from "./fair-rank-demo";
 import { FeatureList } from "./feature-list";
 import { Reveal } from "./reveal";
 import { Wordmark } from "@/components/brand";
+import { SiteFooter } from "@/components/site-footer";
 
 export const metadata: Metadata = {
   title: "Nomrank · Rate the dish, not the place",
@@ -45,10 +47,10 @@ export default function ComingSoonPage() {
         </Link>
       </header>
 
-      {/* Hero: the promise and the signup beside the app's real rating meter. */}
-      <section className={`${WRAP} grid grid-cols-1 items-center gap-12 pt-10 pb-14 lg:min-h-[calc(100svh-5rem)] lg:grid-cols-12 lg:gap-16 lg:pt-6 lg:pb-24`}>
-        <div className="lg:col-span-6">
-          <h1 className="text-[clamp(2.75rem,5.4vw,4.75rem)] leading-[0.98] font-semibold tracking-[-0.04em]">
+      {/* Hero: the promise, real plates curving past with their scores, then the signup. */}
+      <section className="flex flex-col pb-14 lg:min-h-[calc(100svh-5rem)] lg:justify-center lg:pb-10">
+        <div className={`${WRAP} flex flex-col items-center pt-6 text-center lg:pt-2`}>
+          <h1 className="text-[clamp(2.75rem,6vw,5.25rem)] leading-[0.98] font-semibold tracking-[-0.04em]">
             <span className="mask-line">
               <span>Rate the dish,</span>
             </span>
@@ -56,12 +58,30 @@ export default function ComingSoonPage() {
               <span style={{ animationDelay: "110ms" }}>not the place.</span>
             </span>
           </h1>
-          <p className="hero-after mt-6 max-w-[40ch] text-[1.0625rem] leading-relaxed text-muted-foreground lg:text-[1.1875rem]">
-            Rate one dish at a time, from 1 to 10, and find the plates worth ordering. Opening soon in Bengaluru, Mumbai, Delhi and Hyderabad.
+          <p className="hero-after mt-4 max-w-[44ch] text-[1.0625rem] leading-relaxed text-balance text-muted-foreground lg:text-[1.1875rem]">
+            Score one plate at a time, settle it in Battles, and find what&apos;s worth ordering.
           </p>
-          <WaitlistForm id="waitlist-email" className="hero-after mt-8 max-w-[32rem]" />
         </div>
-        <div className="hero-after max-w-[36rem] lg:col-span-6 lg:max-w-none">
+        <div className="hero-after my-4 lg:my-5">
+          <HeroBand />
+        </div>
+        <div className={`${WRAP} hero-after flex flex-col items-center`}>
+          <WaitlistForm id="waitlist-email" className="w-full max-w-[32rem]" />
+          <p className="mt-4 text-center text-[0.875rem] text-muted-foreground">Opening soon in Bengaluru, Mumbai, Delhi and Hyderabad. Scores shown are samples.</p>
+        </div>
+      </section>
+
+      {/* The real rating meter, to try. */}
+      <section className={`${WRAP} grid grid-cols-1 items-center gap-10 py-14 lg:grid-cols-12 lg:gap-16 lg:py-24`}>
+        <div className="lg:col-span-5">
+          <h2 data-reveal className={H2}>
+            Your score, your call.
+          </h2>
+          <p data-reveal style={{ "--i": 1 } as React.CSSProperties} className="mt-5 max-w-[40ch] text-[1.0625rem] leading-relaxed text-muted-foreground">
+            Drag the meter. Hit 9 and the dish earns its Must try badge.
+          </p>
+        </div>
+        <div data-reveal style={{ "--i": 2 } as React.CSSProperties} className="max-w-[36rem] lg:col-span-7 lg:max-w-none">
           <ScoreDemo />
         </div>
       </section>
@@ -122,31 +142,7 @@ export default function ComingSoonPage() {
         </div>
       </section>
 
-      <footer className={`${WRAP} pt-16 pb-10 text-[0.875rem] text-muted-foreground lg:pt-20`}>
-        <div data-reveal className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <Wordmark href={null} className="text-[1.5rem] text-spotlight" />
-          <nav aria-label="Footer" className="flex flex-wrap gap-x-6 gap-y-2 text-[1rem] text-spotlight">
-            <Link href="/about" className={LINK}>
-              How it works
-            </Link>
-            <Link href="/terms" className={LINK}>
-              Terms
-            </Link>
-            <Link href="/privacy" className={LINK}>
-              Privacy
-            </Link>
-            <Link href="/credits" className={LINK}>
-              Credits
-            </Link>
-          </nav>
-        </div>
-        <div data-reveal style={{ "--i": 1 } as React.CSSProperties} className="mt-8 max-w-[75ch]">
-          <p>© 2026 Nomrank. All rights reserved.</p>
-          <p className="mt-2 leading-relaxed text-faint">
-            Nomrank and its original branding, design, website content, and proprietary materials are protected by applicable intellectual property laws. Unauthorised copying, reproduction, distribution, or commercial use without prior written permission is prohibited.
-          </p>
-        </div>
-      </footer>
+      <SiteFooter prelaunch className="mt-0 border-t-0 md:mt-0" />
     </main>
   );
 }
