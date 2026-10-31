@@ -27,5 +27,10 @@ export function inviteProblem(message: string) {
 // development), so a request that carries some other Origin or Host can't point an invitee at another site.
 export const isAdminOrigin = (origin: string) => /^https:\/\/admin\.nomrank\.in$|^http:\/\/admin\.localhost(:\d+)?$/.test(origin);
 
+// Where the admin site sends someone after Google sign-in: only back to an invitation link, never to an address taken
+// from the URL. It travels in a short-lived cookie (path /auth), set before leaving for Google and read by the callback.
+export const ADMIN_NEXT_COOKIE = "admin_next";
+export const inviteNext = (value: unknown) => (typeof value === "string" && /^\/invite\/[A-Za-z0-9_-]{20,100}$/.test(value) ? value : null);
+
 // Where an invitation link goes: back to the admin site (admin.nomrank.in, or admin.localhost:3000 in development).
 export const inviteUrl = (origin: string, token: string) => `${origin}/invite/${token}`;

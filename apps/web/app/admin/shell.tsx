@@ -55,7 +55,7 @@ export function NotAdmin() {
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-3 py-20 text-center">
       <h1 className="text-xl font-bold">This account isn&apos;t an admin</h1>
-      <p className="max-w-sm text-sm text-muted-foreground">Sign out and sign in with an admin account. An existing admin can make you one.</p>
+      <p className="max-w-sm text-sm text-muted-foreground">Admin access is by invitation from the superadmin. Sign out and sign in with an admin account.</p>
       <SignOutButton className="mt-2 min-h-11 rounded-md bg-ketchup px-5 text-sm font-semibold text-studio hover:brightness-110 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none">
         Sign out
       </SignOutButton>

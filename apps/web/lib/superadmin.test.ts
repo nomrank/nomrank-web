@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { inviteProblem, inviteUrl, isAdminOrigin, signInEmail, SUPERADMIN_EMAIL } from "./superadmin";
+import { inviteNext, inviteProblem, inviteUrl, isAdminOrigin, signInEmail, SUPERADMIN_EMAIL } from "./superadmin";
 
 describe("inviteProblem", () => {
   it("says what actually went wrong, so a missing profile is never reported as an expired link", () => {
@@ -39,5 +39,15 @@ describe("inviteUrl / signInEmail", () => {
   it('maps the username "superadmin" to its reserved address', () => {
     expect(signInEmail(" SuperAdmin ")).toBe(SUPERADMIN_EMAIL);
     expect(signInEmail("a@b.co")).toBe("a@b.co");
+  });
+});
+
+describe("inviteNext", () => {
+  const token = "a".repeat(43);
+  it("accepts only an invitation link", () => {
+    expect(inviteNext(`/invite/${token}`)).toBe(`/invite/${token}`);
+    for (const bad of [undefined, null, 42, "", "/", "/admin", "//evil.example", "https://evil.example", "/invite/short", `/invite/${token}?x=1`, `/invite/${token}/x`, `/invite/${"a".repeat(101)}`]) {
+      expect(inviteNext(bad)).toBeNull();
+    }
   });
 });

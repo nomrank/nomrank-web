@@ -2,14 +2,14 @@
 
 import { createHash, randomBytes } from "node:crypto";
 import { refresh } from "next/cache";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { sendEmail } from "@/lib/email";
 import { ADMIN_FROM, adminInviteEmail, adminRemovedEmail } from "@/lib/admin-email";
-import { inviteProblem, inviteUrl, isAdminOrigin, signInEmail } from "@/lib/superadmin";
+import { ADMIN_NEXT_COOKIE, inviteNext, inviteProblem, inviteUrl, isAdminOrigin, signInEmail } from "@/lib/superadmin";
 import { isAdmin } from "@/lib/admin";
 import { emailSchema, passwordSchema, restaurantSchema, restaurantSlug } from "@/lib/validation";
 import { asCity } from "@/lib/cities";
@@ -241,7 +241,24 @@ export async function adminSignIn(_: AdminSignInState, formData: FormData): Prom
   if (error) return { error: error.status === 429 ? "Too many tries. Give it a minute, then try again." : "That email and password don't match.", identifier };
   const next = String(formData.get("next") ?? "");
   // Not redirect(): inside an action it would render the app's page for "/" on this host. The form loads `go` afresh.
-  return { go: /^\/invite\/[A-Za-z0-9_-]+$/.test(next) ? next : "/" };
+  return { go: inviteNext(next) ?? "/" };
+}
+
+// Google sign-in on the admin site. It signs in an existing account (a Google account with the same verified email is
+// linked to the account that email already has, so an existing admin stays an admin). Being admin still comes only from
+// the admins table, which only an invitation fills, so Google can't make anyone an admin. Where to return afterwards (an
+// invitation) goes in a short-lived cookie rather than the URL, so the redirect address stays fixed.
+export async function adminGoogleSignIn(next?: string): Promise<{ go?: string; error?: string }> {
+  const origin = await adminOrigin();
+  if (!isAdminOrigin(origin)) return { error: "Open the admin site to sign in." };
+  const jar = await cookies();
+  const target = inviteNext(next);
+  if (target) jar.set(ADMIN_NEXT_COOKIE, target, { httpOnly: true, sameSite: "lax", path: "/auth", maxAge: 600, secure: origin.startsWith("https") });
+  else jar.delete({ name: ADMIN_NEXT_COOKIE, path: "/auth" });
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: `${origin}/auth/callback` } });
+  if (error || !data.url) return { error: "Couldn't start Google sign-in. Try again." };
+  return { go: data.url };
 }
 
 export async function adminSignOut(): Promise<AdminResult> {
