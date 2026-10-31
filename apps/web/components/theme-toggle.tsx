@@ -1,6 +1,6 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { MonitorIcon, MoonIcon, SunIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -76,4 +76,20 @@ export function ThemeToggle({ className }: { className?: string }) {
       ))}
     </div>
   );
+}
+
+// Keeps the chosen theme on the page: if anything strips data-theme from <html> (a React hydration recovery or a router
+// re-render can), it is put back from the saved choice straight away.
+export function ThemeSync() {
+  useEffect(() => {
+    const root = document.documentElement;
+    const fix = () => {
+      if (!root.dataset.theme) apply(read());
+    };
+    fix();
+    const mo = new MutationObserver(fix);
+    mo.observe(root, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => mo.disconnect();
+  }, []);
+  return null;
 }

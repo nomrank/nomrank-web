@@ -6,6 +6,7 @@ import { NavigationTracker } from "@/components/back-link";
 import { MobileNavLoader } from "@/components/mobile-nav-loader";
 import { NavProgress } from "@/components/nav-progress";
 import { Toaster } from "@/components/toaster";
+import { ThemeSync } from "@/components/theme-toggle";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
@@ -47,6 +48,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Suspense fallback={null}>
           <NavProgress />
         </Suspense>
+        <ThemeSync />
         {children}
         <Suspense fallback={null}>
           <MobileNavLoader />
