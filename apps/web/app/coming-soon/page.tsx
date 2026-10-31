@@ -9,6 +9,7 @@ import { FeatureList } from "./feature-list";
 import { Reveal } from "./reveal";
 import { CityMarquee } from "./city-marquee";
 import { Wordmark } from "@/components/brand";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 import { SiteFooter } from "@/components/site-footer";
 
@@ -51,9 +52,12 @@ export default function ComingSoonPage() {
 
       <header className={`${WRAP} flex h-16 animate-[fade-in_600ms_var(--ease-out)_both] items-center justify-between pt-[env(safe-area-inset-top)] lg:h-20`}>
         <Wordmark href={null} className="text-[1.5rem]" />
-        <Link href="/about" className={`text-[1rem] ${LINK}`}>
-          How it works
-        </Link>
+        <span className="flex items-center gap-4 sm:gap-6">
+          <Link href="/about" className={`text-[1rem] whitespace-nowrap max-sm:hidden ${LINK}`}>
+            How it works
+          </Link>
+          <ThemeToggle />
+        </span>
       </header>
 
       {/* Hero: the promise, real plates curving past with their scores, then the signup. */}
