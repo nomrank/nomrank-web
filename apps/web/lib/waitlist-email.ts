@@ -78,7 +78,7 @@ export function waitlistEmail(siteUrl: string) {
         <tr>
           <td class="pad" style="padding:0 8px 24px 8px;">
             <table role="presentation" cellpadding="0" cellspacing="0"><tr>
-              <td valign="middle" style="padding-right:12px;"><img src="${site}/email/logo.png" width="40" height="40" alt="" style="display:block;width:40px;height:40px;border:0;"></td>
+              <td valign="middle" style="padding-right:12px;"><img src="${site}/email/logo-fox.png" width="48" height="48" alt="" style="display:block;width:48px;height:48px;border:0;"></td>
               <td valign="middle" style="font-family:${WORDMARK};font-size:26px;line-height:30px;font-weight:800;letter-spacing:-0.9px;color:${SPOTLIGHT};">nomrank</td>
             </tr></table>
           </td>

@@ -173,6 +173,8 @@ const fixtureProfile = (data: DataKey, f: (typeof FIXTURES)[DataKey]) => ({
   regions: f.profile.regions && { name: f.profile.regions.name },
   saves_visibility: data === "worst" ? ("only_me" as const) : ("everyone" as const),
   diary_visibility: data === "worst" ? ("followers" as const) : ("everyone" as const),
+  followers_visibility: "everyone" as const,
+  following_visibility: data === "worst" ? ("only_me" as const) : ("everyone" as const),
 });
 const fixtureStats = { demo: { rated: 23, average: 7.8, trust: 214, followers: 48, following: 12 }, worst: { rated: 12345, average: 1, trust: -9876, followers: 1234567, following: 0 } } as Record<string, { rated: number; average: number | null; trust: number; followers: number; following: number }>;
 
@@ -286,7 +288,7 @@ export function BreakUi() {
         <div className="mx-auto grid w-full max-w-6xl gap-5 p-5 lg:grid-cols-2 lg:items-start">
           <PreferencesForm initial={{ show_diet: data === "demo" ? "egg" : "all", feed_default: "top" }} />
           <div className="flex flex-col gap-5">
-            <PrivacyForm initial={{ saves_visibility: data === "worst" ? "only_me" : "everyone", diary_visibility: "followers" }} />
+            <PrivacyForm initial={{ saves_visibility: data === "worst" ? "only_me" : "everyone", diary_visibility: "followers", followers_visibility: "everyone", following_visibility: "followers" }} />
             <DeleteAccount handle={f.profile.username} />
           </div>
         </div>

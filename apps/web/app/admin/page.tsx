@@ -28,7 +28,9 @@ import { PageLoader } from "@/components/loader";
 import { Input } from "@/components/ui/input";
 import { approveDish, cancelInvite, deleteBattle, deleteRestaurant, dismissReports, removeAdmin, removeContent } from "./actions";
 import { ActionButton, AddRestaurantForm, BanControls } from "./controls";
-import { AddDishForm, CreateBattleForm, DishEditor, EditRestaurantForm, InviteAdminForm } from "./forms";
+import { BattleBuilder } from "./battle-builder";
+import { ImportMenu } from "./import-menu";
+import { AddDishForm, DishEditor, EditRestaurantForm, InviteAdminForm } from "./forms";
 import { AdminShell, ChangeDefaultPassword, NotAdmin } from "./shell";
 
 export const metadata: Metadata = { title: "Admin · Nomrank", robots: { index: false } };
@@ -186,7 +188,7 @@ function Dishes({ dishes, app }: { dishes: Awaited<ReturnType<typeof getPendingD
             </p>
           )}
           <div className="mt-4 flex flex-wrap gap-2">
-            <ActionButton run={approveDish} args={[d.id]} label="Approve" icon="approve" done={`${d.name} is live`} tone="primary" />
+            <ActionButton run={approveDish} args={[d.id]} label="Approve" icon="approve" done={`${d.name} is live`} tone="primary" confirm={`Make ${d.name} live?`} detail="Everyone can find, rate and review it straight away." />
             <ActionButton run={removeContent} args={["dish", d.id, "Rejected in review"]} label="Remove" icon="remove" done="Dish removed" confirm="Remove this dish and its ratings?" />
           </div>
         </li>
@@ -267,7 +269,7 @@ function Reports({ groups, app }: { groups: Awaited<ReturnType<typeof getOpenRep
                   tone="danger"
                 />
               )}
-              <ActionButton run={dismissReports} args={[g.target_type, g.target_id]} label="Dismiss" icon="dismiss" done="Reports dismissed" />
+              <ActionButton run={dismissReports} args={[g.target_type, g.target_id]} label="Dismiss" icon="dismiss" done="Reports dismissed" confirm="Dismiss these reports?" detail="The content stays up and the reports are cleared." />
               {g.target?.author_id && g.target.author && <BanControls account={g.target.author_id} handle={g.target.author} banned={false} />}
             </div>
           </li>
@@ -286,6 +288,13 @@ function Restaurants({ restaurants }: { restaurants: Awaited<ReturnType<typeof g
         </h2>
         <p className="mt-1 mb-4 text-sm text-muted-foreground">It goes live straight away. People can then add its dishes.</p>
         <AddRestaurantForm />
+      </section>
+      <section aria-labelledby="import-menu" className={CARD}>
+        <h2 id="import-menu" className="font-semibold">
+          Import from Excel
+        </h2>
+        <p className="mt-1 mb-4 text-sm text-muted-foreground">Add many restaurants and their dishes at once. You see what it will do before anything changes.</p>
+        <ImportMenu />
       </section>
       <section aria-labelledby="places">
         <h2 id="places" className={OVERLINE}>
@@ -355,6 +364,7 @@ function Log({ entries }: { entries: LogEntry[] }) {
 
 const VERBS: Record<string, string> = {
   approve: "approved",
+  import: "imported",
   delete: "removed",
   dismiss: "dismissed reports on",
   ban: "banned",
@@ -557,7 +567,7 @@ function Admins({ admins, invites, me, isSuper }: { admins: AdminAccount[]; invi
                   <span className="font-semibold wrap-anywhere">{i.email}</span>
                   <span className="block text-xs text-faint">Sent {timeAgo(i.created_at)}</span>
                 </span>
-                <ActionButton run={cancelInvite} args={[i.id]} label="Cancel" icon="dismiss" done="Invitation cancelled" />
+                <ActionButton run={cancelInvite} args={[i.id]} label="Cancel" icon="dismiss" done="Invitation cancelled" confirm={`Cancel the invitation to ${i.email}?`} detail="Their link stops working. You can send a new one." />
               </li>
             ))}
           </ul>
@@ -600,8 +610,8 @@ function Battles({ battles, dishes }: { battles: Awaited<ReturnType<typeof getAd
         <h2 id="new-battle" className="font-semibold">
           Create a battle
         </h2>
-        <p className="mt-1 mb-4 text-sm text-muted-foreground">Two live dishes. It shows in their city, or everywhere if they&apos;re in different cities.</p>
-        <CreateBattleForm dishes={dishes} />
+        <p className="mt-1 mb-4 text-sm text-muted-foreground">Search a live dish for each corner. The title fills itself in, and the battle shows in the dishes&apos; city.</p>
+        <BattleBuilder dishes={dishes} />
       </section>
       <section aria-labelledby="battle-list">
         <h2 id="battle-list" className={OVERLINE}>
@@ -611,17 +621,34 @@ function Battles({ battles, dishes }: { battles: Awaited<ReturnType<typeof getAd
           <ul className="mt-2 divide-y divide-hairline">
             {battles.map((b) => {
               const n = b.votes.a + b.votes.b;
+              const a = n ? Math.round((b.votes.a / n) * 100) : 0;
               return (
-                <li key={b.id} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="min-w-0">
+                <li key={b.id} className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0 flex-1">
                     <p className="font-semibold wrap-anywhere">{b.tag}</p>
-                    <p className="text-sm text-muted-foreground wrap-anywhere">
-                      {b.a} <span className="text-faint">vs</span> {b.b}
-                    </p>
-                    <p className="mt-0.5 text-xs text-faint tabular-nums">
-                      {b.city ?? "City war"} · {n} {n === 1 ? "vote" : "votes"}
-                      {n > 0 && ` (${b.votes.a} to ${b.votes.b})`}
-                    </p>
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5 text-sm">
+                      <span className="rounded-full bg-ketchup/15 px-2.5 py-1 wrap-anywhere">{b.a}</span>
+                      <span className="text-xs font-bold text-faint">vs</span>
+                      <span className="rounded-full bg-mustard/15 px-2.5 py-1 wrap-anywhere">{b.b}</span>
+                    </div>
+                    <div className="mt-3 flex items-center gap-3">
+                      <div
+                        role="img"
+                        aria-label={n ? `${b.votes.a} votes for the first dish, ${b.votes.b} for the second` : "No votes yet"}
+                        className="flex h-1.5 w-40 shrink-0 overflow-hidden rounded-full bg-raised"
+                      >
+                        {n > 0 && (
+                          <>
+                            <span className="h-full bg-ketchup" style={{ width: `${a}%` }} />
+                            <span className="h-full flex-1 bg-mustard" />
+                          </>
+                        )}
+                      </div>
+                      <p className="text-xs text-faint tabular-nums">
+                        {b.city ?? "City war"} · {n} {n === 1 ? "vote" : "votes"}
+                        {n > 0 && ` (${b.votes.a} to ${b.votes.b})`}
+                      </p>
+                    </div>
                   </div>
                   <ActionButton run={deleteBattle} args={[b.id]} label="Delete" icon="remove" done="Battle deleted" confirm={n ? `Delete this battle and its ${n} votes?` : "Delete this battle?"} />
                 </li>

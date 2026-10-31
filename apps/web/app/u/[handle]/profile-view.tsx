@@ -101,11 +101,22 @@ export function ProfileView({ profile: p, stats, favourites, ratings, votes, sav
           {p.bio && <p className="mt-4 leading-relaxed whitespace-pre-line wrap-anywhere">{p.bio}</p>}
           <FactChips facts={stated ? { ...facts, diet: undefined } : facts} stated={stated} instagram={p.instagram} />
 
-          <p className="mt-4 text-sm text-muted-foreground">
-            <span className="font-semibold text-foreground tabular-nums">{stats.followers}</span> {stats.followers === 1 ? "follower" : "followers"}
-            {" · "}
-            <span className="font-semibold text-foreground tabular-nums">{stats.following}</span> following
-          </p>
+          <nav aria-label="Followers and following" className="mt-3 -ml-2 flex gap-1 text-sm text-muted-foreground">
+            {(
+              [
+                ["followers", stats.followers, stats.followers === 1 ? "follower" : "followers"],
+                ["following", stats.following, "following"],
+              ] as const
+            ).map(([kind, count, label]) => (
+              <Link
+                key={kind}
+                href={`/u/${p.username}/${kind}`}
+                className="inline-flex min-h-10 items-center gap-1.5 rounded-md px-2 transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              >
+                <span className="font-semibold text-foreground tabular-nums">{count}</span> {label}
+              </Link>
+            ))}
+          </nav>
 
           <TasteCard stats={stats} scores={ratings.map((r) => r.score)} own={own} />
           {match && <MatchCard match={match} handle={p.username} />}

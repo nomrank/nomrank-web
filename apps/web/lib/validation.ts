@@ -172,7 +172,7 @@ export const reportSchema = z
 
 // Mirrors the profiles visibility checks: who sees your "Want to try" list and your Diary.
 const visibility = z.enum(["everyone", "followers", "only_me"], "Pick who can see it.");
-export const privacySchema = z.object({ saves_visibility: visibility, diary_visibility: visibility });
+export const privacySchema = z.object({ saves_visibility: visibility, diary_visibility: visibility, followers_visibility: visibility, following_visibility: visibility });
 
 // Mirrors public.profile_private preference checks.
 export const preferencesSchema = z.object({

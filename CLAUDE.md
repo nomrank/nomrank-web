@@ -26,6 +26,8 @@ Launch: Bengaluru, Mumbai, Delhi and Hyderabad (cities in `apps/web/lib/cities.t
 - **Leaderboard rank** uses a Bayesian (weighted) average, so one 10/10 can't top a Space.
 - **Tastes like home** = average rating from users whose `home_region` equals the dish's `origin_region`. Show only when there are 3 or more such ratings, with the count ("8.7 from 12 Hyderabadis"). Hidden for dishes with no origin region.
 - One `home_region` per user.
+- Privacy: each person chooses who sees their followers and who they follow (everyone, their followers, only them), and the same for their Want to try list and Diary. The database enforces it (`can_see_follow_list`); the counts on a profile always show.
+- Brand: the fox mark is traced vector paths in `apps/web/lib/logo.ts`; the header, favicon, share card, email image and loader all draw from it. Downloadable files are in `apps/web/public/brand/`.
 - `home_region` is where you grew up; `city` (one of the launch cities) is where you eat now. The home feed shows every city; rankings, dishes, places and sidebars follow your city.
 - Anti-gaming: one rating per user per dish; new accounts weigh less in rankings.
 - Tone: playful, Gen-Z, celebrating home food. Never region-vs-region framing.

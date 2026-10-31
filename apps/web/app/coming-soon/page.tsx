@@ -7,7 +7,9 @@ import { TakeDemo } from "./take-demo";
 import { FairRankDemo } from "./fair-rank-demo";
 import { FeatureList } from "./feature-list";
 import { Reveal } from "./reveal";
+import { CityMarquee } from "./city-marquee";
 import { Wordmark } from "@/components/brand";
+import { cn } from "@/lib/utils";
 import { SiteFooter } from "@/components/site-footer";
 
 export const metadata: Metadata = {
@@ -30,13 +32,20 @@ const STRUCTURED_DATA = {
 // One page width and one pair of margins for every section, so all the left edges line up.
 const WRAP = "mx-auto w-full max-w-[76rem] px-5 sm:px-8 lg:px-10";
 const H2 = "text-[clamp(2.25rem,4vw,3.5rem)] leading-[1.02] font-semibold tracking-[-0.035em] text-balance";
-const LINK = "transition-colors duration-150 underline-offset-4 hover:text-spotlight hover:underline focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-mustard focus-visible:outline-none";
+const EYEBROW = "text-[0.8125rem] font-semibold tracking-[0.14em] text-muted-foreground uppercase";
+const TILE = "rounded-[2rem] border border-hairline bg-raised/50";
+const STEPS = [
+  { title: "Rate a dish", text: "Score the plate, not the restaurant. A 1 to 10, a short take, a photo if you have one." },
+  { title: "Argue about it", text: "People agree, disagree or reply. Every take shows how many are with you." },
+  { title: "Find what's worth eating", text: "Rankings for every food, by city. Tastes like home shows what its own region thinks." },
+];
+const LINK = "transition-colors duration-150 underline-offset-4 hover:text-foreground hover:underline focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-mustard focus-visible:outline-none";
 
 // The pre-launch landing page, shown on the main domain while COMING_SOON=1 (see proxy.ts). The product shows
 // itself: each section is a working piece of the app (the rating meter, a take, the feature search).
 export default function ComingSoonPage() {
   return (
-    <main className="bg-studio text-spotlight">
+    <main className="bg-background text-foreground">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA) }} />
       <Reveal />
 
@@ -71,48 +80,62 @@ export default function ComingSoonPage() {
         </div>
       </section>
 
-      {/* The real rating meter, to try. */}
-      <section className={`${WRAP} grid grid-cols-1 items-center gap-10 py-14 lg:grid-cols-12 lg:gap-16 lg:py-24`}>
-        <div className="lg:col-span-5">
-          <h2 data-reveal className={H2}>
-            Your score, your call.
-          </h2>
-          <p data-reveal style={{ "--i": 1 } as React.CSSProperties} className="mt-5 max-w-[40ch] text-[1.0625rem] leading-relaxed text-muted-foreground">
-            Drag the meter. Hit 9 and the dish earns its Must try badge.
+      {/* How it works: three steps with big outlined numerals. */}
+      <section className={`${WRAP} py-14 lg:py-24`}>
+        <p data-reveal className={EYEBROW}>How it works</p>
+        <ol className="mt-6 grid grid-cols-1 border-y border-hairline md:grid-cols-3 md:divide-x md:divide-hairline">
+          {STEPS.map((st, i) => (
+            <li key={st.title} data-reveal style={{ "--i": i } as React.CSSProperties} className="flex flex-col gap-3 border-b border-hairline py-8 last:border-b-0 md:border-b-0 md:px-8 md:first:pl-0 md:last:pr-0">
+              <span aria-hidden className="numeral text-[5.5rem] leading-[0.85] font-extrabold tracking-[-0.05em] select-none">
+                {String(i + 1).padStart(2, "0")}
+              </span>
+              <h2 className="text-[1.5rem] font-semibold tracking-[-0.02em]">{st.title}</h2>
+              <p className="max-w-[34ch] leading-relaxed text-muted-foreground">{st.text}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      {/* Try it: the real pieces of the app, each in its own framed tile. */}
+      <section className={`${WRAP} pb-14 lg:pb-24`}>
+        <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
+          <div>
+            <p data-reveal className={EYEBROW}>Try it</p>
+            <h2 data-reveal style={{ "--i": 1 } as React.CSSProperties} className={`mt-3 ${H2}`}>
+              Poke around. It&apos;s the real thing.
+            </h2>
+          </div>
+          <p data-reveal style={{ "--i": 2 } as React.CSSProperties} className="max-w-[36ch] text-[1.0625rem] leading-relaxed text-muted-foreground">
+            Everything below works like the app will. Nothing you type is saved.
           </p>
         </div>
-        <div data-reveal style={{ "--i": 2 } as React.CSSProperties} className="max-w-[36rem] lg:col-span-7 lg:max-w-none">
-          <ScoreDemo />
+
+        <div className="mt-10 grid grid-cols-1 gap-4 lg:grid-cols-12 lg:gap-5">
+          <Tile className="lg:col-span-7" tag="Score" title="Your score, your call." text="Drag the meter. Hit 9 and the dish earns its Must try badge.">
+            <ScoreDemo />
+          </Tile>
+          <Tile className="lg:col-span-5" tag="Rank" title="One 10 can't win." text="A new dish with one perfect score shouldn't beat a favourite hundreds agree on. Flip the switch.">
+            <FairRankDemo />
+          </Tile>
+          <div data-reveal className={`${TILE} p-5 sm:p-8 lg:col-span-12 lg:p-12`}>
+            <TakeDemo />
+          </div>
         </div>
       </section>
 
-      <section className={`${WRAP} py-14 lg:pt-12 lg:pb-32`}>
-        <TakeDemo />
-      </section>
-
-      <section className={`${WRAP} grid grid-cols-1 items-center gap-10 py-14 lg:grid-cols-12 lg:gap-16 lg:py-24`}>
-        <div className="lg:col-span-5">
-          <h2 data-reveal className={H2}>
-            One 10 can&apos;t win.
-          </h2>
-          <p data-reveal style={{ "--i": 1 } as React.CSSProperties} className="mt-5 max-w-[40ch] text-[1.0625rem] leading-relaxed text-muted-foreground">
-            A brand-new dish with a single perfect score shouldn&apos;t beat a favourite that hundreds agree on. Flip the switch and watch.
-          </p>
-        </div>
-        <div data-reveal style={{ "--i": 2 } as React.CSSProperties} className="lg:col-span-7">
-          <FairRankDemo />
-        </div>
-      </section>
+      {/* The launch cities and their landmarks, scrolling. */}
+      <CityMarquee />
 
       {/* Features as the app's own search list. */}
       <section className={`${WRAP} py-14 lg:py-32`}>
-        <h2 data-reveal className={H2}>
+        <p data-reveal className={EYEBROW}>The menu</p>
+        <h2 data-reveal style={{ "--i": 1 } as React.CSSProperties} className={`mt-3 ${H2}`}>
           What you can do
         </h2>
-        <p data-reveal style={{ "--i": 1 } as React.CSSProperties} className="mt-5 mb-10 max-w-[42ch] text-[1.0625rem] leading-relaxed text-muted-foreground">
+        <p data-reveal style={{ "--i": 2 } as React.CSSProperties} className="mt-5 mb-10 max-w-[42ch] text-[1.0625rem] leading-relaxed text-muted-foreground">
           Search the list, or tap a feature to see it.
         </p>
-        <div data-reveal style={{ "--i": 2 } as React.CSSProperties}>
+        <div data-reveal style={{ "--i": 3 } as React.CSSProperties}>
           <FeatureList />
         </div>
       </section>
@@ -144,5 +167,19 @@ export default function ComingSoonPage() {
 
       <SiteFooter prelaunch className="mt-0 border-t-0 md:mt-0" />
     </main>
+  );
+}
+
+// A framed tile of the "Try it" grid: a small tag, a title and a line, then the working piece under it.
+function Tile({ tag, title, text, className, children }: { tag: string; title: string; text: string; className?: string; children: React.ReactNode }) {
+  return (
+    <div data-reveal className={cn(TILE, "flex flex-col gap-6 p-5 sm:p-8", className)}>
+      <div>
+        <p className="inline-flex rounded-full border border-hairline bg-paper px-3 py-1 text-[0.75rem] font-semibold tracking-[0.1em] text-muted-foreground uppercase">{tag}</p>
+        <h3 className="mt-4 text-[clamp(1.75rem,2.6vw,2.25rem)] leading-[1.05] font-semibold tracking-[-0.03em] text-balance">{title}</h3>
+        <p className="mt-2 max-w-[40ch] leading-relaxed text-muted-foreground">{text}</p>
+      </div>
+      <div className="flex flex-1 flex-col *:flex-1">{children}</div>
+    </div>
   );
 }

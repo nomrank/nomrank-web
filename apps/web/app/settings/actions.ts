@@ -7,23 +7,30 @@ import { preferencesSchema, privacySchema } from "@/lib/validation";
 
 export type DeleteAccountState = { error?: string };
 
-// Delete your account for good. You confirm by typing your handle. Your photo files go first (Storage isn't part of
-// the database cascade), then the database removes the account and everything that hangs off it.
+// Delete your account for good. You confirm by typing your handle. The database removes the account and everything that
+// hangs off it first; only then do the photo files go (Storage isn't part of the cascade). That order means a failed
+// delete never leaves a live account with its pictures gone, and a failed file clean-up leaves only invisible files.
 export async function deleteAccount(_: DeleteAccountState, formData: FormData): Promise<DeleteAccountState> {
   const { supabase, userId, profile } = await getCurrentUser({ allowSuspended: true });
   if (!profile) redirect("/onboarding");
   const typed = String(formData.get("confirm") ?? "").trim().replace(/^@/, "").toLowerCase();
   if (typed !== profile.username) return { error: `Type ${profile.username} to confirm.` };
 
-  for (const bucket of ["rating-photos", "avatars"]) {
-    // shortcut: removes up to 1000 files per bucket; page through them if anyone ever uploads more.
-    const { data: files } = await supabase.storage.from(bucket).list(userId, { limit: 1000 });
-    const paths = (files ?? []).map((f) => `${userId}/${f.name}`);
-    if (paths.length) await supabase.storage.from(bucket).remove(paths);
-  }
+  // Their files, listed while the account still exists.
+  // shortcut: up to 1000 files per bucket; page through them if anyone ever uploads more.
+  const files = await Promise.all(
+    ["rating-photos", "avatars"].map(async (bucket) => {
+      const { data } = await supabase.storage.from(bucket).list(userId, { limit: 1000 });
+      return { bucket, paths: (data ?? []).map((f) => `${userId}/${f.name}`) };
+    }),
+  );
 
   const { error } = await supabase.rpc("delete_my_account");
-  if (error) return { error: "Couldn't delete your account just now. Try again in a moment." };
+  if (error) {
+    if (error.message.includes("superadmin")) return { error: "The superadmin account runs the admin site and can't be deleted." };
+    return { error: "Couldn't delete your account just now. Try again in a moment." };
+  }
+  for (const { bucket, paths } of files) if (paths.length) await supabase.storage.from(bucket).remove(paths);
 
   await supabase.auth.signOut();
   redirect("/?account=deleted");
@@ -50,7 +57,12 @@ export type PrivacyState = { error?: string; saved?: number };
 export async function savePrivacy(prev: PrivacyState, formData: FormData): Promise<PrivacyState> {
   const { supabase, userId, profile } = await getCurrentUser();
   if (!profile) redirect("/onboarding");
-  const parsed = privacySchema.safeParse({ saves_visibility: formData.get("saves_visibility"), diary_visibility: formData.get("diary_visibility") });
+  const parsed = privacySchema.safeParse({
+    saves_visibility: formData.get("saves_visibility"),
+    diary_visibility: formData.get("diary_visibility"),
+    followers_visibility: formData.get("followers_visibility"),
+    following_visibility: formData.get("following_visibility"),
+  });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const { error } = await supabase.from("profiles").update(parsed.data).eq("id", userId);
   if (error) return { error: "Couldn't save that just now. Try again in a moment." };

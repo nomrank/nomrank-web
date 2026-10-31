@@ -23,13 +23,22 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#17111c",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#fbf6ef" },
+    { media: "(prefers-color-scheme: dark)", color: "#17111c" },
+  ],
   viewportFit: "cover",
 };
 
+// Sets data-theme before first paint: the saved choice, else the device's setting. Dark is the fallback if this can't run.
+const THEME_SCRIPT = `try{var t=localStorage.getItem("nomrank-theme");document.documentElement.dataset.theme=t==="light"||t==="dark"?t:matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}catch(e){}`;
+
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${jakarta.variable} ${geist.variable} h-full antialiased`}>
+    <html lang="en" suppressHydrationWarning className={`${jakarta.variable} ${geist.variable} h-full antialiased`}>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      </head>
       <body className="flex min-h-dvh flex-col bg-background">
         {/* The pathname is request data, so it streams in rather than blocking the page shell. */}
         <Suspense fallback={null}>

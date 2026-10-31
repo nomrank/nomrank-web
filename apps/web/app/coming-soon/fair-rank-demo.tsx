@@ -26,7 +26,7 @@ export function FairRankDemo() {
   const order = [...DISHES].sort((a, b) => scoreOf(b, mode) - scoreOf(a, mode));
 
   return (
-    <div data-ui className="w-full rounded-3xl bg-paper p-5 text-spotlight sm:p-7">
+    <div data-ui className="flex h-full w-full flex-col rounded-3xl bg-paper p-5 text-foreground sm:p-7">
       <div role="radiogroup" aria-label="Sort by" className="grid grid-cols-2 gap-1 rounded-full bg-raised p-1">
         {(["raw", "nomrank"] as const).map((m) => (
           <button
@@ -70,7 +70,7 @@ export function FairRankDemo() {
           );
         })}
       </ol>
-      <p className="mt-3 text-[0.875rem] leading-relaxed text-muted-foreground">
+      <p className="mt-auto pt-3 text-[0.875rem] leading-relaxed text-muted-foreground">
         {mode === "raw" ? "One person gives a new dish a 10 and it tops the list." : "Every dish starts with five 7s. A single 10 moves it a little. Hundreds of ratings move it a lot."}
       </p>
     </div>

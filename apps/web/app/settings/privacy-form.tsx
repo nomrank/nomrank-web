@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { BookOpenIcon, BookmarkIcon, GlobeIcon, LockIcon, UsersRoundIcon } from "lucide-react";
+import { BookOpenIcon, BookmarkIcon, GlobeIcon, LockIcon, UserCheckIcon, UsersIcon, UsersRoundIcon } from "lucide-react";
 import { VISIBILITIES, type Visibility } from "@/lib/profiles";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -12,24 +12,36 @@ import { savePrivacy, type PrivacyState } from "./actions";
 
 const ICONS = { everyone: GlobeIcon, followers: UsersRoundIcon, only_me: LockIcon } satisfies Record<Visibility, unknown>;
 
-type Initial = { saves_visibility: Visibility; diary_visibility: Visibility };
+type Initial = { saves_visibility: Visibility; diary_visibility: Visibility; followers_visibility: Visibility; following_visibility: Visibility };
 
 const LISTS = [
   {
     name: "saves_visibility",
-    label: "Want to try list",
+    question: "Who can see your Want to try list",
     icon: BookmarkIcon,
     hint: "The dishes you've saved for later.",
   },
   {
     name: "diary_visibility",
-    label: "Diary",
+    question: "Who can see your Diary",
     icon: BookOpenIcon,
     hint: "Your rating history by date. Your scores and takes still show on dish pages.",
   },
+  {
+    name: "followers_visibility",
+    question: "Who can see your followers",
+    icon: UsersIcon,
+    hint: "The list of people who follow you. The number on your profile always shows.",
+  },
+  {
+    name: "following_visibility",
+    question: "Who can see who you follow",
+    icon: UserCheckIcon,
+    hint: "The list of people you follow. The number on your profile always shows.",
+  },
 ] as const;
 
-// Who sees your Want to try list and Diary: a three-way switch for each, saved together.
+// Who sees your Want to try list, Diary, followers and following: a three-way switch for each, saved together.
 export function PrivacyForm({ initial }: { initial: Initial }) {
   const [state, action, pending] = useActionState<PrivacyState, FormData>(async (prev, data) => {
     const next = await savePrivacy(prev, data);
@@ -37,15 +49,17 @@ export function PrivacyForm({ initial }: { initial: Initial }) {
     return next;
   }, {});
   const [values, setValues] = useState(initial);
-  const dirty = values.saves_visibility !== initial.saves_visibility || values.diary_visibility !== initial.diary_visibility;
+  const dirty = LISTS.some(({ name }) => values[name] !== initial[name]);
 
   return (
-    <form action={action} className="flex flex-col gap-5">
-      {LISTS.map(({ name, label, icon: Icon, hint }) => (
+    // React resets a form after its action runs, which snaps a controlled radio back to the value it first drew. A new
+    // key after each save redraws the buttons from what was saved.
+    <form key={state.saved ?? 0} action={action} className="flex flex-col gap-5">
+      {LISTS.map(({ name, question, icon: Icon, hint }) => (
         <fieldset key={name}>
           <legend className="flex items-center gap-2 text-sm font-semibold">
             <Icon aria-hidden className="size-4 text-mustard" />
-            Who can see your {label}
+            {question}
           </legend>
           <p className="mt-1 mb-2.5 text-sm text-muted-foreground">{hint}</p>
           <div className="grid grid-cols-3 gap-1 rounded-xl border border-hairline bg-raised p-1">

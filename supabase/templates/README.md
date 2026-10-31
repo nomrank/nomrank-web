@@ -33,3 +33,6 @@ Edit the wording in the code; these files are only a preview.
 
 `waitlist-welcome.html` is a sample render of the email people get when they join the waitlist. The app builds and sends it
 (`apps/web/lib/waitlist-email.ts`, from `hello@nomrank.in`); edit the wording in the code. It is only a preview.
+
+The logo in these emails is `https://www.nomrank.in/email/logo-fox.png`. After the logo changed (2026-10-31) the two templates above
+need pasting into the dashboard again, or Supabase keeps sending the old copy.

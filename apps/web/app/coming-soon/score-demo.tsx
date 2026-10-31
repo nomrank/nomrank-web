@@ -12,7 +12,7 @@ import { verdict } from "@/lib/ratings";
 export function ScoreDemo() {
   const [score, setScore] = useState(9);
   return (
-    <div data-ui className="w-full overflow-hidden rounded-3xl bg-paper text-spotlight">
+    <div data-ui className="w-full overflow-hidden rounded-3xl bg-paper text-foreground">
       <div className="relative">
         <div className="overflow-hidden">
           <Image

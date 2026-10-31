@@ -15,6 +15,8 @@ export type PublicProfile = {
   regions: { name: string } | null;
   saves_visibility: Visibility;
   diary_visibility: Visibility;
+  followers_visibility: Visibility;
+  following_visibility: Visibility;
 };
 
 // Who can see a profile's "Want to try" list and Diary.
@@ -62,7 +64,7 @@ export type Favourite = {
 export async function getProfileByHandle(supabase: SupabaseClient, handle: string) {
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, username, display_name, bio, avatar, avatar_path, diet, instagram, created_at, saves_visibility, diary_visibility, regions(name)")
+    .select("id, username, display_name, bio, avatar, avatar_path, diet, instagram, created_at, saves_visibility, diary_visibility, followers_visibility, following_visibility, regions(name)")
     .eq("username", handle)
     .maybeSingle<PublicProfile>();
   if (error) throw error;
@@ -85,6 +87,42 @@ export async function getFavourites(supabase: SupabaseClient, profileId: string)
     .returns<Favourite[]>();
   if (error) throw error;
   return data;
+}
+
+export type FollowKind = "followers" | "following";
+
+// One person in someone's followers or following list; `following` is whether the viewer follows them.
+export type FollowPerson = { id: string; username: string; display_name: string | null; avatar: string | null; avatar_path: string | null; following: boolean };
+
+// shortcut: the newest 100 only. Page it when anyone has more.
+const FOLLOW_LIST_MAX = 100;
+
+// May the viewer open this list? The database decides (the owner's choice, and whether the viewer follows them).
+export async function canSeeFollowList(supabase: SupabaseClient, ownerId: string, kind: FollowKind) {
+  const { data, error } = await supabase.rpc("can_see_follow_list", { owner: ownerId, kind });
+  if (error) throw error;
+  return data === true;
+}
+
+// The people in `ownerId`'s followers (who follow them) or following (whom they follow), newest first. Check
+// canSeeFollowList first: a follow can also be visible through the other person's list, so this alone doesn't gate it.
+export async function getFollowList(supabase: SupabaseClient, ownerId: string, kind: FollowKind, viewerId: string | null): Promise<FollowPerson[]> {
+  const other = kind === "followers" ? "follower_id" : "followee_id"; // the person on the far side of each follow
+  const near = kind === "followers" ? "followee_id" : "follower_id";
+  const { data, error } = await supabase
+    .from("follows")
+    .select(`person:profiles!follows_${other}_fkey(id, username, display_name, avatar, avatar_path)`)
+    .eq(near, ownerId)
+    .order("created_at", { ascending: false })
+    .limit(FOLLOW_LIST_MAX)
+    .returns<{ person: Omit<FollowPerson, "following"> }[]>();
+  if (error) throw error;
+  const people = data.map((r) => r.person);
+  if (!viewerId || !people.length) return people.map((p) => ({ ...p, following: false }));
+  const { data: mine, error: mineError } = await supabase.from("follows").select("followee_id").eq("follower_id", viewerId).in("followee_id", people.map((p) => p.id));
+  if (mineError) throw mineError;
+  const followed = new Set(mine.map((f) => f.followee_id as string));
+  return people.map((p) => ({ ...p, following: followed.has(p.id) }));
 }
 
 // Who this person follows (ids), for the Following feed.

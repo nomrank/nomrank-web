@@ -18,7 +18,7 @@ export function WaitlistForm({ id, className }: { id: string; className?: string
           <CheckIcon aria-hidden className="size-5" strokeWidth={3} />
         </span>
         <div>
-          <p className="text-[1.0625rem] font-semibold text-spotlight">You&apos;re on the list.</p>
+          <p className="text-[1.0625rem] font-semibold text-foreground">You&apos;re on the list.</p>
           <p className="mt-1 text-[1rem] text-muted-foreground">We&apos;ll email you the moment Nomrank opens.</p>
         </div>
       </div>
@@ -43,7 +43,7 @@ export function WaitlistForm({ id, className }: { id: string; className?: string
           placeholder="you@example.com"
           aria-invalid={state.error ? true : undefined}
           aria-describedby={note}
-          className="h-13 w-full min-w-0 rounded-md sm:flex-1 border border-input bg-raised px-4 text-base text-spotlight caret-ketchup outline-none placeholder:text-faint focus-visible:border-mustard focus-visible:ring-2 focus-visible:ring-mustard/40 aria-invalid:border-[#ff8a7d]"
+          className="h-13 w-full min-w-0 rounded-md sm:flex-1 border border-input bg-raised px-4 text-base text-foreground caret-ketchup outline-none placeholder:text-faint focus-visible:border-mustard focus-visible:ring-2 focus-visible:ring-mustard/40 aria-invalid:border-destructive"
         />
         <button
           type="submit"
@@ -62,7 +62,7 @@ export function WaitlistForm({ id, className }: { id: string; className?: string
       </div>
       {/* Honeypot: off-screen and skipped by keyboard and screen readers; only bots fill it in. */}
       <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden className="absolute -left-[9999px] size-px opacity-0" />
-      <p id={note} role={state.error ? "alert" : undefined} className={cn("mt-2 text-[0.875rem]", state.error ? "text-[#ff8a7d]" : "text-muted-foreground")}>
+      <p id={note} role={state.error ? "alert" : undefined} className={cn("mt-2 text-[0.875rem]", state.error ? "text-destructive" : "text-muted-foreground")}>
         {state.error ?? "We'll email you once now to confirm, and once when we open."}
       </p>
     </form>
