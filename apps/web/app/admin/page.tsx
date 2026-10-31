@@ -30,7 +30,9 @@ import { approveDish, cancelInvite, deleteBattle, deleteRestaurant, dismissRepor
 import { ActionButton, AddRestaurantForm, BanControls } from "./controls";
 import { BattleBuilder } from "./battle-builder";
 import { ImportMenu } from "./import-menu";
-import { AddDishForm, DishEditor, EditRestaurantForm, InviteAdminForm } from "./forms";
+import { MenuManager } from "./menu-manager";
+import { RestaurantList } from "./restaurant-list";
+import { EditRestaurantForm, InviteAdminForm } from "./forms";
 import { AdminShell, ChangeDefaultPassword, NotAdmin } from "./shell";
 
 export const metadata: Metadata = { title: "Admin · Nomrank", robots: { index: false } };
@@ -296,25 +298,11 @@ function Restaurants({ restaurants }: { restaurants: Awaited<ReturnType<typeof g
         <p className="mt-1 mb-4 text-sm text-muted-foreground">Add many restaurants and their dishes at once. You see what it will do before anything changes.</p>
         <ImportMenu />
       </section>
-      <section aria-labelledby="places">
-        <h2 id="places" className={OVERLINE}>
-          {restaurants.length} restaurants
+      <section aria-labelledby="places" className="flex flex-col gap-3">
+        <h2 id="places" className="font-semibold">
+          Restaurants
         </h2>
-        <ul className="mt-2 grid gap-x-8 sm:grid-cols-2 lg:grid-cols-3">
-          {restaurants.map((r) => (
-            <li key={r.id} className="border-b border-hairline">
-              <Link href={`/?tab=restaurants&place=${r.slug}`} className="-mx-2 flex min-h-14 items-center justify-between gap-3 rounded-md px-2 py-2 hover:bg-muted">
-                <span className="min-w-0">
-                  <span className="block truncate text-sm font-semibold">{r.name}</span>
-                  <span className="block text-xs text-faint">
-                    {r.area}, {r.city}
-                  </span>
-                </span>
-                <span className="shrink-0 text-xs text-muted-foreground tabular-nums">{r.dishes.length} dishes</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <RestaurantList restaurants={restaurants.map((r) => ({ id: r.id, slug: r.slug, name: r.name, area: r.area, city: r.city, dishes: r.dishes.length }))} />
       </section>
     </div>
   );
@@ -427,31 +415,49 @@ function Place({ place, app }: { place: AdminPlace | null; app: string }) {
         </Link>
       </div>
       <section aria-labelledby="place-details" className={CARD}>
-        <h2 id="place-details" className="mb-4 font-semibold">
-          {place.name}
-        </h2>
-        <EditRestaurantForm place={place} />
+        <div className="flex items-center gap-4">
+          <span aria-hidden className="grid size-14 shrink-0 place-items-center rounded-2xl bg-primary text-2xl font-extrabold text-primary-foreground">
+            {place.name.charAt(0).toUpperCase()}
+          </span>
+          <div className="min-w-0 flex-1">
+            <h2 id="place-details" className="text-xl font-bold tracking-tight wrap-anywhere">
+              {place.name}
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              {place.area}, {place.city}
+            </p>
+          </div>
+        </div>
+        <dl className="mt-4 grid grid-cols-3 gap-2 text-center">
+          {(
+            [
+              ["Dishes", place.dishes.length],
+              ["Ratings", place.dishes.reduce((n, d) => n + d.rating_count, 0)],
+              ["Waiting", place.dishes.filter((d) => !d.approved_at).length],
+            ] as const
+          ).map(([label, n]) => (
+            <div key={label} className="rounded-xl bg-raised/60 px-2 py-2.5">
+              <dd className="text-xl font-bold tabular-nums">{n.toLocaleString("en-IN")}</dd>
+              <dt className="text-xs text-faint">{label}</dt>
+            </div>
+          ))}
+        </dl>
+        <details className="group mt-4 border-t border-hairline pt-3">
+          <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between text-sm font-semibold marker:hidden [&::-webkit-details-marker]:hidden">
+            Edit name, area or city
+            <span aria-hidden className="text-faint transition-transform duration-200 group-open:rotate-45">+</span>
+          </summary>
+          <div className="pt-3">
+            <EditRestaurantForm place={place} />
+          </div>
+        </details>
       </section>
       <section aria-labelledby="menu" className={CARD}>
         <h2 id="menu" className="font-semibold">
           Menu · {place.dishes.length} {place.dishes.length === 1 ? "dish" : "dishes"}
         </h2>
         <p className="mt-1 mb-4 text-sm text-muted-foreground">Dishes you add go live straight away and join their food list by name.</p>
-        <AddDishForm restaurantId={place.id} />
-        {place.dishes.length > 0 && (
-          <ul className="mt-5 divide-y divide-hairline border-t border-hairline">
-            {place.dishes.map((d) => (
-              <li key={d.id} className="py-3">
-                <DishEditor dish={d}>
-                  <span className="text-xs text-faint tabular-nums">
-                    {d.approved_at ? `${d.rating_count} ${d.rating_count === 1 ? "rating" : "ratings"}` : "Waiting for review"}
-                  </span>
-                  <ActionButton run={removeContent} args={["dish", d.id, "Removed by an admin"]} label="Remove" icon="remove" done="Dish removed" confirm="Remove this dish and its ratings?" />
-                </DishEditor>
-              </li>
-            ))}
-          </ul>
-        )}
+        <MenuManager restaurantId={place.id} dishes={place.dishes} />
       </section>
       <section aria-labelledby="danger" className={cn(CARD, "border-destructive/40")}>
         <h2 id="danger" className="font-semibold">
