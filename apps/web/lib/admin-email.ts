@@ -46,11 +46,11 @@ export function adminInviteEmail({ url, inviter }: { url: string; inviter: strin
     subject: "You're invited to be a Nomrank admin",
     html: layout({
       title: "Be a Nomrank admin",
-      body: `${esc(inviter)} invited you to help run Nomrank: review dishes, handle reports, and look after the places and people on it. Sign in with the Nomrank account for this email address, then accept.`,
+      body: `${esc(inviter)} invited you to help run Nomrank: review dishes, handle reports, and look after the places and people on it. You need a Nomrank account for this email address (create one first if you don't have it), then accept.`,
       button: { label: "Accept the invitation", url },
       note: "The link works for 7 days and only for this email address. Not expecting this? Ignore this email and nothing changes.",
     }),
-    text: `${inviter} invited you to be a Nomrank admin.\n\nSign in with the Nomrank account for this email address, then accept:\n${url}\n\nThe link works for 7 days and only for this email address. Not expecting this? Ignore this email and nothing changes.`,
+    text: `${inviter} invited you to be a Nomrank admin.\n\nYou need a Nomrank account for this email address (create one first if you don't have it), then accept:\n${url}\n\nThe link works for 7 days and only for this email address. Not expecting this? Ignore this email and nothing changes.`,
   };
 }
 

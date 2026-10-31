@@ -9,7 +9,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { sendEmail } from "@/lib/email";
 import { ADMIN_FROM, adminInviteEmail, adminRemovedEmail } from "@/lib/admin-email";
-import { inviteUrl, signInEmail } from "@/lib/superadmin";
+import { inviteProblem, inviteUrl, isAdminOrigin, signInEmail } from "@/lib/superadmin";
 import { isAdmin } from "@/lib/admin";
 import { emailSchema, passwordSchema, restaurantSchema, restaurantSlug } from "@/lib/validation";
 import { asCity } from "@/lib/cities";
@@ -173,6 +173,8 @@ export async function inviteAdmin(_: AdminResult, formData: FormData): Promise<A
   if (!email.success) return failed(email.error.issues[0].message);
   const { supabase, profile } = await getCurrentUser();
   if (!(await isAdmin(supabase))) notFound();
+  const origin = await adminOrigin();
+  if (!isAdminOrigin(origin)) return failed("Send invitations from the admin site (admin.nomrank.in).");
   const token = randomBytes(32).toString("base64url");
   const { error } = await supabase.rpc("admin_create_invite", { invite_email: email.data.toLowerCase(), hash: sha256(token) });
   if (error) {
@@ -182,7 +184,7 @@ export async function inviteAdmin(_: AdminResult, formData: FormData): Promise<A
     return failed("Couldn't create the invitation. Try again.");
   }
   try {
-    await sendEmail({ from: ADMIN_FROM, to: email.data, ...adminInviteEmail({ url: inviteUrl(await adminOrigin(), token), inviter: profile?.username ? `@${profile.username}` : "A Nomrank admin" }) });
+    await sendEmail({ from: ADMIN_FROM, to: email.data, ...adminInviteEmail({ url: inviteUrl(origin, token), inviter: profile?.username ? `@${profile.username}` : "A Nomrank admin" }) });
   } catch {
     return failed("The invitation was saved but the email didn't send. Cancel it and try again.");
   }
@@ -222,9 +224,7 @@ export async function acceptInvite(token: string): Promise<AdminResult> {
   const { supabase } = await getCurrentUser();
   const { error } = await supabase.rpc("accept_admin_invite", { hash: sha256(token) });
   if (error) {
-    if (error.message.includes("another email")) return failed("This invitation was sent to a different email. Sign in with that account.");
-    if (error.message.includes("banned")) return failed("This account can't be an admin.");
-    return failed("This invitation has expired or was already used. Ask the superadmin for a new one.");
+    return failed(inviteProblem(error.message));
   }
   return { ok: Date.now() }; // the page then loads "/" afresh: a redirect() here would render the app's home on this host
 }
