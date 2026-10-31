@@ -13,6 +13,8 @@ import { ADMIN_NEXT_COOKIE, inviteNext, inviteProblem, inviteUrl, isAdminOrigin,
 import { isAdmin } from "@/lib/admin";
 import { emailSchema, passwordSchema, restaurantSchema, restaurantSlug } from "@/lib/validation";
 import { asCity } from "@/lib/cities";
+import { parseMenuSheet, type ImportCounts, type MenuProblem } from "@/lib/menu-import";
+import { readFirstSheet, SheetError } from "@/lib/xlsx-read";
 
 // Every admin action runs as the signed-in admin; the database functions check is_admin() again and log it.
 // These only validate input, call the function, and clean up photo files the database can't delete.
@@ -311,6 +313,38 @@ export async function createBattle(_: AdminResult, formData: FormData): Promise<
   if (error) return failed(error.message.includes("live") ? "Both dishes must be live." : "Couldn't create that battle. Try again.");
   refresh();
   return { ok: Date.now() };
+}
+
+// A menu sheet: an Excel file of restaurants and their dishes. Without `apply` it only checks the file and says what an
+// import would do; with it, it imports (all of it or none of it). Whatever the sheet says is checked here and again by the
+// database, and only admins get this far.
+export type ImportState = { error?: string; problems?: MenuProblem[]; moreProblems?: number; counts?: ImportCounts; applied?: boolean };
+const UPLOAD_MAX = 900 * 1024; // a server action takes a body of up to 1 MB
+
+export async function importMenu(_: ImportState, formData: FormData): Promise<ImportState> {
+  const supabase = await admin();
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) return { error: "Choose an Excel file first." };
+  if (!/\.xlsx$/i.test(file.name)) return { error: "That isn't an .xlsx file. In Excel, use Save As and pick Excel Workbook (.xlsx)." };
+  if (file.size > UPLOAD_MAX) return { error: "That file is over 900 KB. Split it into smaller files." };
+
+  let sheet: string[][];
+  try {
+    sheet = readFirstSheet(new Uint8Array(await file.arrayBuffer()));
+  } catch (e) {
+    return { error: e instanceof SheetError ? e.message : "Couldn't read that file. Is it a real .xlsx?" };
+  }
+  const parsed = parseMenuSheet(sheet);
+  if (parsed.fatal) return { error: parsed.fatal };
+  if (parsed.problems.length) return { problems: parsed.problems.slice(0, 30), moreProblems: Math.max(0, parsed.problems.length - 30) };
+
+  const apply = formData.get("apply") === "1";
+  const { data, error } = await supabase.rpc("admin_import_menu", { sheet: parsed.rows.map((r) => ({ restaurant: r.restaurant, area: r.area, city: r.city, dish: r.dish, diet: r.diet, list: r.list, slug: r.slug, slug_alt: r.slug_alt })), apply });
+  if (error) {
+    return { error: error.message.includes("no free address") ? "One restaurant couldn't get a free web address. Change its name a little and try again." : "The import didn't go through and nothing was changed. Try again." };
+  }
+  if (apply) refresh();
+  return { counts: data as ImportCounts, applied: apply };
 }
 
 export async function deleteBattle(battle: string): Promise<AdminResult> {

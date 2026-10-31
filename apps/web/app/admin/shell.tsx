@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { LogOutIcon, UserRoundCogIcon } from "lucide-react";
 import { Wordmark } from "@/components/brand";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { PasswordForm, SignOutButton } from "./forms";
 
 // The admin site's frame: the wordmark with an Admin tag, your account and sign out. No app nav, no footer.
@@ -14,6 +15,7 @@ export function AdminShell({ children, signedIn = true }: { children: React.Reac
         </span>
         {signedIn && (
           <span className="flex items-center gap-1">
+            <ThemeToggle className="mr-1 max-sm:hidden" />
             <Link
               href="/account"
               aria-label="Your account"

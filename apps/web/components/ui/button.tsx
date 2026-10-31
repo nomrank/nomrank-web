@@ -12,7 +12,7 @@ const buttonVariants = cva(
         outline:
           "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
         secondary:
-          "border-hairline bg-raised text-foreground hover:bg-[#352c3d] aria-expanded:bg-[#352c3d]",
+          "border-hairline bg-raised text-foreground hover:bg-[color-mix(in_oklab,var(--raised),var(--foreground)_8%)] aria-expanded:bg-[color-mix(in_oklab,var(--raised),var(--foreground)_8%)]",
         ghost:
           "hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50",
         destructive:

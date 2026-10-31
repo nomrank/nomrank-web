@@ -4,12 +4,13 @@ import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { LogoMark } from "@/components/brand";
 
-// The Nomrank mark holding still while its sparkle glints, over a soft mustard glow. Under reduced motion it holds still.
+// The fox arrives, then idles: it floats a little, its hand gives the OK now and then and the sparkle glints, over a soft
+// glow. Under reduced motion it just stands there.
 export function BroadcastLoader({ size = 56, label = "Loading", className }: { size?: number; label?: string; className?: string }) {
   return (
-    <span role="status" aria-label={label} className={cn("relative grid place-items-center text-spotlight", className)} style={{ width: size, height: size }}>
+    <span role="status" aria-label={label} className={cn("relative grid place-items-center text-foreground", className)} style={{ width: size, height: size }}>
       <span aria-hidden className="absolute inset-[-30%] rounded-full bg-[radial-gradient(closest-side,rgb(255_194_60/0.16),transparent)]" />
-      <LogoMark size={size} twinkle className="relative" />
+      <LogoMark size={size} animate className="relative" />
     </span>
   );
 }
@@ -26,7 +27,7 @@ export function PageLoader() {
   }, []);
   return (
     <div className="flex flex-1 animate-[fade-in_300ms_var(--ease-out)_120ms_both] flex-col items-center justify-center gap-5 py-24">
-      <BroadcastLoader size={64} />
+      <BroadcastLoader size={76} />
       <p aria-hidden key={line} className="animate-[line-in_260ms_var(--ease-out)] text-sm font-medium text-muted-foreground">
         {LINES[line]}…
       </p>

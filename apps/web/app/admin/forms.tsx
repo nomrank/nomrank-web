@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState, useTransition } from "react";
-import { CheckIcon, MailPlusIcon, PencilIcon, PlusIcon, SwordsIcon } from "lucide-react";
+import { CheckIcon, MailPlusIcon, PencilIcon, PlusIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FieldError } from "@/components/ui/field";
@@ -10,7 +10,7 @@ import { DietMark } from "@/components/diet-mark";
 import { toast } from "@/components/toaster";
 import { CITIES } from "@/lib/cities";
 import { DISH_DIETS, type DishDiet } from "@/lib/diet";
-import { adminSignOut, addDish, changePassword, updateDish, updateMyName, updateRestaurant, inviteAdmin, createBattle, type AdminResult } from "./actions";
+import { adminSignOut, addDish, changePassword, updateDish, updateMyName, updateRestaurant, inviteAdmin, type AdminResult } from "./actions";
 
 const SELECT =
   "h-11 rounded-md border border-input bg-raised px-3 text-base focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none";
@@ -170,41 +170,5 @@ export function SignOutButton({ className, children, label }: { className?: stri
     >
       {children}
     </button>
-  );
-}
-
-export function CreateBattleForm({ dishes }: { dishes: { id: string; label: string }[] }) {
-  const [state, action, pending] = useAdminForm(createBattle, "Battle created");
-  const options = (
-    <>
-      <option value="" disabled>
-        Choose a dish
-      </option>
-      {dishes.map((d) => (
-        <option key={d.id} value={d.id}>
-          {d.label}
-        </option>
-      ))}
-    </>
-  );
-  return (
-    <form key={state.ok ?? 0} action={action} className="flex flex-col gap-3">
-      <Input name="tag" required minLength={3} maxLength={80} placeholder="Title, e.g. The OG biryani war" aria-label="Battle title" className="h-11 bg-raised" />
-      <div className="grid gap-3 md:grid-cols-2">
-        <select name="dish_a" required defaultValue="" aria-label="Side A" className={`${SELECT} w-full`}>
-          {options}
-        </select>
-        <select name="dish_b" required defaultValue="" aria-label="Side B" className={`${SELECT} w-full`}>
-          {options}
-        </select>
-      </div>
-      <div>
-        <Button type="submit" size="xl" disabled={pending} className="sm:min-h-11">
-          {pending ? <Spinner data-icon="inline-start" /> : <SwordsIcon data-icon="inline-start" />}
-          Create battle
-        </Button>
-      </div>
-      {state.error && <FieldError>{state.error}</FieldError>}
-    </form>
   );
 }

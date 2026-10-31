@@ -47,7 +47,7 @@ async function Home({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
   const [votes, unread, askCity] = await Promise.all([
     profile ? getMyVotes(supabase, reviews.map((r) => r.id)) : {},
     profile && userId ? unreadCount(supabase, userId) : 0,
-    shouldAskCity(profile, city),
+    account === "deleted" ? false : shouldAskCity(profile, city), // someone who just deleted their account isn't asked anything
   ]);
   return (
     <HomeView

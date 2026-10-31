@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 import { formatScore, scoreHeat } from "./ratings";
-import { markUri } from "./logo";
+import { HEAD_ASPECT, markUri } from "./logo";
 
 // Link previews (WhatsApp, Instagram, X…): one 1200×630 card in the Nomrank look. Rendered by next/og, which
 // understands a small subset of CSS: flex layout and plain colours only (no CSS variables).
@@ -12,7 +12,6 @@ const PAPER = "#211a27";
 const SPOTLIGHT = "#fff4ea";
 const MUTED = "#b3a8b9";
 const KETCHUP = "#ff4b3a";
-const MUSTARD = "#ffc23c";
 
 // The score colour as plain RGB: ketchup (low) to mustard (high), the same blend as the app.
 function scoreRgb(score: number) {
@@ -55,9 +54,10 @@ export function loadFonts() {
 }
 
 // The mark for generated images (icons, cards), as a picture of the same SVG the app draws.
-export function Mark({ size }: { size: number }) {
+// `head` is just the fox's head and scarf, for sizes too small to read the hand and the sparkle.
+export function Mark({ size, head = false }: { size: number; head?: boolean }) {
   // eslint-disable-next-line @next/next/no-img-element -- next/og renders plain img
-  return <img src={markUri(SPOTLIGHT, MUSTARD)} alt="" width={size} height={size} />;
+  return <img src={markUri(head)} alt="" width={head ? Math.round(size * HEAD_ASPECT) : size} height={size} />;
 }
 
 export async function ogCard({ eyebrow, title, subtitle, body, score, scoreNote, photo }: Card) {
@@ -79,7 +79,7 @@ export async function ogCard({ eyebrow, title, subtitle, body, score, scoreNote,
             )}
           </div>
           <div style={{ display: "flex", alignItems: "center", fontFamily: "Plus Jakarta Sans", fontWeight: 800, fontSize: 40, letterSpacing: -1.4 }}>
-            <Mark size={52} />
+            <Mark size={68} />
             <span style={{ marginLeft: 12 }}>nomrank</span>
             <span style={{ marginLeft: 18, fontFamily: "Geist", fontSize: 24, fontWeight: 500, color: MUTED, letterSpacing: 0 }}>Rate the dish, not the place.</span>
           </div>

@@ -3,6 +3,7 @@
 @import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
+@custom-variant light (&:where([data-theme="light"], [data-theme="light"] *));
 
 @theme inline {
   --color-background: var(--background);
@@ -64,6 +65,7 @@
   /* Scores: ketchup rising into mustard, the two brand colours in one fill. */
   --score-gradient: linear-gradient(225deg, var(--mustard) 10%, var(--ketchup) 90%);
   --spotlight: #fff4ea;
+  --logo-face: var(--spotlight);
   --paper: #211a27; /* raised surfaces on the Studio ground */
   --raised: #2a2231;
   --hairline: #2f2737;
@@ -140,6 +142,34 @@
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
 }
+
+:root[data-theme="light"] {
+  /* Light theme: warm cream paper, plum ink. Brand fills (ketchup, mustard) stay; text uses the darker inks below. */
+  --background: #fbf6ef;
+  --foreground: #17111c;
+  --paper: #ffffff;
+  --raised: #f3ebe0;
+  --hairline: #e6dccf;
+  --faint: #756a7b; /* 5.1:1 on paper */
+  --card: var(--paper);
+  --card-foreground: var(--foreground);
+  --popover: var(--paper);
+  --popover-foreground: var(--foreground);
+  --secondary-foreground: var(--foreground);
+  --accent-foreground: var(--foreground);
+  --muted-foreground: #5f5467;
+  --muted: #eadfce; /* hover fill: raised is too close to the cream page to show */
+  --destructive: #c4301f;
+  --input: #8c8293; /* field outlines: 3.5:1 on cream */
+  --ring: #17111c;
+  --ink-mustard: #8a5a00;
+  --ink-ketchup: #d42d1c;
+  --logo-face: #f1c4a6; /* the fox's cream face would vanish on cream paper, so it turns peach */
+  color-scheme: light;
+}
+/* Mustard and ketchup are fills in the dark theme; as text on cream they need darker inks. */
+:root[data-theme="light"] .text-mustard { color: var(--ink-mustard); }
+:root[data-theme="light"] .text-ketchup { color: var(--ink-ketchup); }
 
 @layer base {
   * {
@@ -275,7 +305,7 @@
 
 /* Loading placeholders: a soft sheen sweeping across. */
 .skeleton {
-  background: linear-gradient(90deg, var(--raised) 30%, color-mix(in oklab, var(--raised), white 7%) 50%, var(--raised) 70%);
+  background: linear-gradient(90deg, var(--raised) 30%, color-mix(in oklab, var(--raised), var(--foreground) 7%) 50%, var(--raised) 70%);
   background-size: 200% 100%;
   animation: shimmer 1.5s linear infinite;
 }
@@ -378,13 +408,44 @@
     transform: translateX(2.5rem) scale(0.94);
   }
 }
-@keyframes rays {
-  to {
-    transform: translate(-50%, -50%) rotate(360deg);
+/* The loader's fox (components/brand.tsx, animate): it arrives, then idles. The head floats a little, the hand gives its OK
+   now and then, the sparkle glints (twinkle, above). Transforms only, so it stays smooth while the page is busy. */
+@keyframes fox-arrive {
+  from { opacity: 0; transform: translateY(7%) scale(0.96); }
+}
+@keyframes hand-arrive {
+  from { opacity: 0; transform: scale(0.5) rotate(-18deg); }
+}
+@keyframes fox-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1.8%); }
+}
+@keyframes hand-wave {
+  0%, 52%, 100% { transform: rotate(0); }
+  60% { transform: rotate(-9deg); }
+  68% { transform: rotate(7deg); }
+  76% { transform: rotate(-5deg); }
+  84% { transform: rotate(0); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .fox-mark .fox-head {
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+    animation: fox-arrive 520ms var(--ease-out) both, fox-float 3s ease-in-out 700ms infinite;
+  }
+  .fox-mark .fox-hand {
+    transform-box: fill-box;
+    transform-origin: 20% 92%;
+    animation: hand-arrive 560ms cubic-bezier(0.34, 1.56, 0.64, 1) 180ms both, hand-wave 3s ease-in-out 900ms infinite;
   }
 }
-.battle-rays {
-  background: repeating-conic-gradient(from 0deg, rgb(255 194 60 / 0.07) 0deg 7deg, transparent 7deg 18deg);
-  mask-image: radial-gradient(closest-side, #000 18%, transparent 62%);
-  animation: rays 70s linear infinite;
+
+/* Big numerals and city names drawn as outlines. */
+.numeral {
+  color: transparent;
+  -webkit-text-stroke: 1.5px var(--foreground);
+}
+
+@keyframes marquee {
+  to { transform: translateX(-50%); }
 }

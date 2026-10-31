@@ -204,8 +204,10 @@ describe("preferencesSchema", () => {
 
 describe("privacySchema", () => {
   it("takes the three levels and nothing else", () => {
-    expect(privacySchema.parse({ saves_visibility: "followers", diary_visibility: "only_me" })).toEqual({ saves_visibility: "followers", diary_visibility: "only_me" });
-    expect(privacySchema.safeParse({ saves_visibility: "friends", diary_visibility: "everyone" }).success).toBe(false);
+    const all = { saves_visibility: "followers", diary_visibility: "only_me", followers_visibility: "everyone", following_visibility: "only_me" };
+    expect(privacySchema.parse(all)).toEqual(all);
+    expect(privacySchema.safeParse({ saves_visibility: "everyone", diary_visibility: "everyone" }).success).toBe(false);
+    expect(privacySchema.safeParse({ ...all, following_visibility: "friends" }).success).toBe(false);
   });
 });
 

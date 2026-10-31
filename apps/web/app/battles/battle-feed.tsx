@@ -188,9 +188,7 @@ function BattleCard({
   const list = b.a.list === b.b.list ? b.a.list : null;
 
   return (
-    <section data-battle={b.id} data-live={live} aria-label={`Battle ${index + 1} of ${total}: ${b.tag}`} className="group/card relative isolate flex h-full snap-start flex-col justify-center overflow-hidden px-5 py-3">
-      {/* Slow turning rays behind the fight, only for the battle on screen. */}
-      <span aria-hidden className="battle-rays pointer-events-none absolute top-1/2 left-1/2 -z-10 size-[170vmax] -translate-x-1/2 -translate-y-1/2 opacity-0 transition-opacity duration-1000 group-data-[live=true]/card:opacity-100 motion-reduce:hidden" />
+    <section data-battle={b.id} data-live={live} aria-label={`Battle ${index + 1} of ${total}: ${b.tag}`} className="group/card relative flex h-full snap-start flex-col justify-center overflow-hidden px-5 py-3">
       <div className="relative mx-auto flex w-full max-w-[35rem] flex-col gap-[clamp(1rem,3.4dvh,1.75rem)]" data-fx>
         <header className="flex flex-col items-center gap-2 text-center">
           <p className="flex flex-wrap items-center justify-center gap-x-2 text-[0.6875rem] font-semibold tracking-[0.12em] text-muted-foreground uppercase transition-[opacity,transform] duration-500 ease-[var(--ease-out)] group-data-[live=false]/card:translate-y-2 group-data-[live=false]/card:opacity-0 motion-reduce:transition-none">
@@ -212,7 +210,7 @@ function BattleCard({
           <span
             aria-hidden
             className={cn(
-              "pointer-events-none absolute top-[min(calc((50vw-1.6rem)*4/3*0.5),19dvh)] left-1/2 z-10 grid size-11 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-studio text-sm font-extrabold text-spotlight shadow-[0_0_0_2px_var(--spotlight)] transition-transform duration-500 ease-[cubic-bezier(0.3,1.6,0.5,1)] motion-reduce:transition-none",
+              "pointer-events-none absolute top-[min(calc((50vw-1.6rem)*4/3*0.5),19dvh)] left-1/2 z-10 grid size-11 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-studio text-sm font-extrabold text-spotlight shadow-[0_0_0_5px_var(--background)] transition-transform duration-500 ease-[cubic-bezier(0.3,1.6,0.5,1)] motion-reduce:transition-none",
               (!live || voted) && "scale-0",
             )}
           >
@@ -261,7 +259,8 @@ function ShareButton({ onClick }: { onClick: () => void }) {
   );
 }
 
-// One corner: a cream polaroid (tilted, straightens when picked) holding the dish's score on a coloured tile, then its name, place and, after voting, its share.
+// One corner: a tall colour tile with the dish's score big in it. Voting fills the tile from the bottom to the dish's share of
+// the votes, like a glass filling, with the share counting up at the base. The name and place sit under the tile.
 function Side({
   battle,
   side,
@@ -292,54 +291,61 @@ function Side({
       aria-label={`Vote for ${d.name} at ${d.place}`}
       onClick={(e) => onVote(battle, side, e.currentTarget)}
       className={cn(
-        "group/side relative flex min-w-0 flex-col items-center gap-1.5 text-center outline-none transition-opacity duration-300",
+        "group/side relative flex min-w-0 flex-col gap-2.5 text-left outline-none transition-opacity duration-300",
         "group-data-[live=false]/card:opacity-0 motion-reduce:animate-none",
         a ? "group-data-[live=true]/card:animate-[battle-in-l_650ms_var(--ease-out)_300ms_backwards]" : "group-data-[live=true]/card:animate-[battle-in-r_650ms_var(--ease-out)_620ms_backwards]",
-        voted && !mine && "opacity-55",
+        voted && !mine && "opacity-60",
       )}
     >
       <span
         className={cn(
-          "relative block w-full rounded-[1.25rem] bg-spotlight p-1.5 shadow-[0_18px_40px_-16px_rgb(0_0_0/0.8)]",
-          "transition-[transform,background-color] duration-500 ease-[var(--ease-out)] motion-reduce:transition-none",
+          "relative isolate flex aspect-[3/4] max-h-[38dvh] w-full flex-col justify-between overflow-hidden rounded-3xl p-3.5 text-studio",
+          "transition-[transform,box-shadow] duration-300 ease-[var(--ease-out)] motion-reduce:transition-none",
           "group-focus-visible/side:ring-2 group-focus-visible/side:ring-ring group-focus-visible/side:ring-offset-2 group-focus-visible/side:ring-offset-background",
-          "group-active/side:scale-[0.97] [@media(hover:hover)_and_(pointer:fine)]:group-hover/side:-translate-y-1 [@media(hover:hover)_and_(pointer:fine)]:group-hover/side:rotate-0",
-          a ? "-rotate-3" : "rotate-3",
-          voted && mine && "scale-[1.03] rotate-0 bg-mustard",
-          voted && !mine && "scale-95 rotate-0",
+          "group-active/side:scale-[0.97] [@media(hover:hover)_and_(pointer:fine)]:group-hover/side:-translate-y-1",
+          a ? "bg-ketchup" : "bg-mustard",
+          voted && mine && "shadow-[0_0_0_3px_var(--background),0_0_0_6px_var(--foreground)]",
         )}
       >
-        <span className={cn("relative grid aspect-[3/4] max-h-[36dvh] w-full place-content-center justify-items-center gap-1 overflow-hidden rounded-[0.9rem] text-studio", a ? "bg-ketchup" : "bg-mustard")}>
-          <span aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_28%_18%,rgb(255_255_255/0.32),transparent_62%)]" />
-          <span className="absolute top-2 left-2 rounded bg-spotlight p-1">
+        <span aria-hidden className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_20%_0%,rgb(255_255_255/0.35),transparent_60%)]" />
+        {/* The vote share, rising from the base. Transform only, so it stays smooth. */}
+        <span
+          aria-hidden
+          className="absolute inset-x-0 bottom-0 -z-10 h-full origin-bottom bg-studio/25 transition-transform duration-[900ms] ease-[var(--ease-out)] motion-reduce:transition-none"
+          style={{ transform: `scaleY(${voted ? percent / 100 : 0})` }}
+        />
+        <span className="flex items-start justify-between gap-2">
+          <span className="rounded-md bg-spotlight p-1">
             <DietMark diet={d.diet} className="size-3" />
           </span>
-          <span className="relative text-[clamp(2.75rem,15vw,4.25rem)] leading-none font-extrabold tracking-[-0.04em] tabular-nums">{rated ? d.avg!.toFixed(1) : "New"}</span>
-          <span className="relative text-[0.6875rem] font-semibold tracking-[0.06em] uppercase opacity-70">{rated ? `${d.count} ${d.count === 1 ? "rating" : "ratings"}` : "No ratings yet"}</span>
+          {voted && mine ? (
+            <span className="inline-flex animate-[check-pop_420ms_var(--ease-out)_both] items-center gap-1 rounded-full bg-studio px-2 py-1 text-[0.6875rem] font-bold tracking-[0.04em] text-spotlight uppercase">
+              {saving ? <Spinner className="size-3" /> : <CheckIcon aria-hidden className="size-3 text-mustard" strokeWidth={3} />}
+              Your pick
+            </span>
+          ) : (
+            lead && (
+              <span className="inline-flex animate-[rise-in_320ms_var(--ease-out)_both] items-center gap-1 rounded-full bg-studio px-2 py-1 text-[0.6875rem] font-bold tracking-[0.04em] text-spotlight uppercase">
+                <FlameIcon aria-hidden className="size-3 fill-current text-mustard" />
+                Leading
+              </span>
+            )
+          )}
         </span>
-        {lead && (
-          <span className="absolute -top-2.5 right-2 inline-flex animate-[rise-in_320ms_var(--ease-out)_both] items-center gap-1 rounded-full bg-studio px-2 py-1 text-[0.6875rem] font-bold tracking-[0.04em] text-mustard uppercase">
-            <FlameIcon aria-hidden className="size-3 fill-current" />
-            Leading
-          </span>
-        )}
+        <span className="flex flex-col">
+          <span className="text-[clamp(3.25rem,17vw,4.75rem)] leading-[0.9] font-extrabold tracking-[-0.05em] tabular-nums">{rated ? d.avg!.toFixed(1) : "New"}</span>
+          <span className="mt-1 text-[0.6875rem] font-semibold tracking-[0.06em] uppercase opacity-75">{rated ? `${d.count} ${d.count === 1 ? "rating" : "ratings"}` : "No ratings yet"}</span>
+          {voted && <span className="mt-2 text-[2rem] leading-none font-extrabold tabular-nums">{shown}%</span>}
+        </span>
       </span>
 
-      <span className="mt-1 flex min-h-6 items-center">
-        {voted && mine && (
-          <span className="inline-flex animate-[check-pop_420ms_var(--ease-out)_both] items-center gap-1 rounded-full bg-studio px-2.5 py-1 text-[0.6875rem] font-bold tracking-[0.04em] text-mustard uppercase">
-            {saving ? <Spinner className="size-3" /> : <CheckIcon aria-hidden className="size-3" strokeWidth={3} />}
-            Your pick
-          </span>
-        )}
+      <span className="flex flex-col gap-0.5 px-1">
+        <span className="text-[clamp(1.0625rem,4.8vw,1.375rem)] leading-[1.05] font-bold text-balance wrap-anywhere">{d.name}</span>
+        <span className="text-[0.6875rem] leading-snug font-medium tracking-[0.06em] text-muted-foreground uppercase wrap-anywhere">
+          {d.place}
+          {battle.city === null && ` · ${d.city}`}
+        </span>
       </span>
-
-      <span className="text-[clamp(1.0625rem,4.8vw,1.375rem)] leading-[1.05] font-bold text-balance wrap-anywhere">{d.name}</span>
-      <span className="text-[0.6875rem] leading-snug font-medium tracking-[0.06em] text-muted-foreground uppercase wrap-anywhere">
-        {d.place}
-        {battle.city === null && ` · ${d.city}`}
-      </span>
-      {voted && <span className={cn("text-[2.125rem] leading-none font-extrabold tabular-nums", mine ? "text-mustard" : "text-muted-foreground")}>{shown}%</span>}
     </button>
   );
 }

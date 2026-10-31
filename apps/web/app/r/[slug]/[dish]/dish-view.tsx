@@ -85,7 +85,7 @@ export function DishView({ dish, ratings = [], votes = {}, viewer = null, sort =
               {spread.map((n, i) => (
                 <span
                   key={i}
-                  className="flex-1 origin-bottom animate-[bar-grow_320ms_var(--ease-out)_both] rounded-t-[2px] bg-[#4a4052]"
+                  className="flex-1 origin-bottom animate-[bar-grow_320ms_var(--ease-out)_both] rounded-t-[2px] bg-faint/50"
                   style={{ height: `${Math.max(3, (n / peak) * 56)}px`, animationDelay: `${i * 25}ms` }}
                 />
               ))}

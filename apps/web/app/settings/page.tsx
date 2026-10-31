@@ -11,6 +11,7 @@ import { BackLink } from "@/components/back-link";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { signOut } from "@/app/actions";
 import { DeleteAccount } from "./delete-account";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { PreferencesForm } from "./preferences-form";
 import { PrivacyForm } from "./privacy-form";
 
@@ -32,7 +33,11 @@ async function Settings() {
   const [{ data }, prefs, privacy] = await Promise.all([
     supabase.auth.getClaims(),
     getPreferences(supabase, userId),
-    supabase.from("profiles").select("saves_visibility, diary_visibility").eq("id", userId).single<{ saves_visibility: Visibility; diary_visibility: Visibility }>(),
+    supabase
+      .from("profiles")
+      .select("saves_visibility, diary_visibility, followers_visibility, following_visibility")
+      .eq("id", userId)
+      .single<{ saves_visibility: Visibility; diary_visibility: Visibility; followers_visibility: Visibility; following_visibility: Visibility }>(),
   ]);
   if (privacy.error) throw privacy.error;
   const email = typeof data?.claims.email === "string" ? data.claims.email : null;
@@ -45,6 +50,13 @@ async function Settings() {
       {/* Desktop: preferences on the left; privacy, account and the danger zone on the right. */}
       <div className="mt-6 grid gap-5 lg:grid-cols-2 lg:items-start lg:gap-6">
         <Card id="preferences" title="Preferences" icon={SlidersHorizontalIcon} lead="What Nomrank shows you.">
+          <div className="mb-6 flex items-center justify-between gap-3">
+            <div>
+              <p className="font-semibold">Theme</p>
+              <p className="text-sm text-muted-foreground">Light, dark, or match your device.</p>
+            </div>
+            <ThemeToggle />
+          </div>
           <PreferencesForm initial={prefs} />
         </Card>
 

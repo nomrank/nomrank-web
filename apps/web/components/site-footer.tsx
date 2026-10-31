@@ -76,6 +76,7 @@ export function SiteFooter({ prelaunch = process.env.COMING_SOON === "1", classN
 
         <div className="mt-6 flex flex-col gap-1 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <p>© 2026 Nomrank. All rights reserved.</p>
+
           <nav aria-label="Legal" className="-my-2 flex gap-5">
             {LEGAL.map((l) => (
               <Link key={l.href} href={l.href} className={`inline-flex min-h-10 items-center ${LINK}`}>
@@ -97,7 +98,7 @@ export function SiteFooter({ prelaunch = process.env.COMING_SOON === "1", classN
       </div>
 
       <div aria-hidden className="mt-6 h-[clamp(3.5rem,10vw,9rem)] select-none">
-        <p className="text-center font-wordmark text-[24vw] leading-[0.82] font-extrabold tracking-[-0.045em] whitespace-nowrap text-spotlight/[0.07]">nomrank</p>
+        <p className="text-center font-wordmark text-[24vw] leading-[0.82] font-extrabold tracking-[-0.045em] whitespace-nowrap text-foreground/[0.07]">nomrank</p>
       </div>
     </footer>
   );

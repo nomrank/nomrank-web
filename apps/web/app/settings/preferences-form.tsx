@@ -30,7 +30,9 @@ export function PreferencesForm({ initial }: { initial: { show_diet: ShowDiet; f
   const dirty = show !== initial.show_diet || feed !== initial.feed_default;
 
   return (
-    <form action={action} className="flex flex-col gap-6">
+    // React resets a form after its action runs, which snaps a controlled radio back to the value it first drew. A new
+    // key after each save redraws the buttons from what was saved.
+    <form key={state.saved ?? 0} action={action} className="flex flex-col gap-6">
       <fieldset>
         <legend className="mb-1 font-semibold">Show dishes</legend>
         <p className="mb-3 text-sm text-muted-foreground">Filters the feed, dish lists and search. Dish pages you open directly still show everything.</p>

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { BattleDish } from "./battle-builder";
 import type { DishDiet } from "./diet";
 import { dishKey } from "./dishes";
 import type { ReportTarget } from "./validation";
@@ -258,17 +259,18 @@ export async function getAdminBattles(supabase: SupabaseClient): Promise<AdminBa
   }));
 }
 
-export type DishOption = { id: string; label: string };
+export type DishOption = BattleDish;
 
-// Every live dish as "Masala Dosa · CTR, Malleshwaram (Bengaluru)", for choosing the two sides of a battle.
+// Every live dish, for the battle builder to search (the newest 2000 by name).
+// shortcut: all of them are sent to the browser; search on the server once there are many thousands.
 export async function getDishOptions(supabase: SupabaseClient): Promise<DishOption[]> {
   const { data, error } = await supabase
     .from("dishes")
-    .select("id, name, restaurant:restaurants(name, area, city)")
+    .select("id, name, diet, restaurant:restaurants(name, area, city)")
     .not("approved_at", "is", null)
     .order("name")
     .limit(2000)
-    .returns<{ id: string; name: string; restaurant: { name: string; area: string; city: string } }[]>();
+    .returns<{ id: string; name: string; diet: BattleDish["diet"]; restaurant: { name: string; area: string; city: string } }[]>();
   if (error) throw error;
-  return data.map((d) => ({ id: d.id, label: `${d.name} · ${d.restaurant.name}, ${d.restaurant.area} (${d.restaurant.city})` }));
+  return data.map((d) => ({ id: d.id, name: d.name, diet: d.diet, place: d.restaurant.name, area: d.restaurant.area, city: d.restaurant.city }));
 }

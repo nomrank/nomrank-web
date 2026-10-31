@@ -84,7 +84,7 @@ export function FeatureList() {
               placeholder="Find a feature"
               aria-label="Find a feature"
               aria-controls={listId}
-              className="h-full min-w-0 flex-1 bg-transparent text-spotlight caret-ketchup outline-none placeholder:text-muted-foreground"
+              className="h-full min-w-0 flex-1 bg-transparent text-foreground caret-ketchup outline-none placeholder:text-muted-foreground"
             />
           </div>
           <button
@@ -92,7 +92,7 @@ export function FeatureList() {
             onClick={() => setAuto((a) => !a)}
             aria-pressed={!auto}
             aria-label={auto ? "Pause the feature tour" : "Play the feature tour"}
-            className="grid size-[2.375rem] shrink-0 place-items-center rounded-lg bg-paper text-muted-foreground transition-colors outline-none hover:text-spotlight focus-visible:ring-2 focus-visible:ring-mustard sm:size-[3.325rem]"
+            className="grid size-[2.375rem] shrink-0 place-items-center rounded-lg bg-paper text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-mustard sm:size-[3.325rem]"
           >
             {auto ? <PauseIcon aria-hidden className="size-5" /> : <PlayIcon aria-hidden className="size-5" />}
           </button>
@@ -117,7 +117,7 @@ export function FeatureList() {
                   }}
                   className={cn(
                     "w-full rounded-lg px-4 py-2 text-left text-[clamp(1.625rem,3.2vw,2.75rem)] leading-[1.1] font-semibold tracking-[-0.03em] transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-mustard",
-                    !on && "text-spotlight/50 hover:text-spotlight",
+                    !on && "text-foreground/50 hover:text-foreground",
                   )}
                 >
                   {f.name}
@@ -164,13 +164,13 @@ export function FeatureList() {
 // The fixed frame each explainer sits in, so switching features never changes the page's height.
 function Stage({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-[18rem] justify-center text-spotlight lg:h-[25rem] lg:items-center lg:rounded-3xl lg:bg-paper lg:p-8">
+    <div className="flex h-[18rem] justify-center text-foreground lg:h-[25rem] lg:items-center lg:rounded-3xl lg:bg-paper lg:p-8">
       <div className="h-full w-full max-w-[24rem] animate-[explainer-in_380ms_var(--ease-out)_both] *:h-full lg:h-auto lg:*:h-auto">{children}</div>
     </div>
   );
 }
 
-const CARD = "rounded-2xl bg-studio p-4 text-[0.875rem] sm:p-5";
+const CARD = "rounded-2xl bg-background p-4 text-[0.875rem] sm:p-5";
 
 // One score from each tier, best first.
 const SCALE = [9.5, 8, 7, 5.5, 4, 2];

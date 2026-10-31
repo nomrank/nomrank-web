@@ -32,7 +32,7 @@ export function DishGlance({ dish, ratings }: { dish: string; ratings: Review[] 
               </div>
               <div className="flex h-14 flex-1 items-end gap-[3px]" role="img" aria-label={`Scores: ${spread.map((n, i) => `${n} rated ${i + 1}`).join(", ")}`}>
                 {spread.map((n, i) => (
-                  <span key={i} className="flex-1 rounded-t-[2px] bg-[#4a4052]" style={{ height: `${Math.max(3, (n / peak) * 56)}px` }} />
+                  <span key={i} className="flex-1 rounded-t-[2px] bg-faint/50" style={{ height: `${Math.max(3, (n / peak) * 56)}px` }} />
                 ))}
               </div>
             </div>

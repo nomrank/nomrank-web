@@ -35,7 +35,7 @@ export function MealCard({ reviews, votes, viewer }: Props) {
       <ol className="mt-1 ml-3.5 border-l border-hairline pl-5">
         {reviews.map((r) => (
           <li key={r.id} className="relative [&+&]:border-t [&+&]:border-hairline">
-            <span aria-hidden className="absolute top-[1.6rem] -left-[26px] size-2.5 rounded-full border-2 border-studio bg-faint" />
+            <span aria-hidden className="absolute top-[1.6rem] -left-[26px] size-2.5 rounded-full border-2 border-background bg-faint" />
             <ReviewCard review={r} vote={votes[r.id]} viewer={viewer} inMeal />
           </li>
         ))}
